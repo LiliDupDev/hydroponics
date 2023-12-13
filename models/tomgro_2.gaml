@@ -206,7 +206,7 @@ species tomato_plant
 	float 		PTNLVS	<- 0.0;						// Total potential sink capacity of all leaf age classes	
 	float		XSLA	<- 0.0;			 			// Average specific leaf area		
 	float		ASTOTL	<- 0.0;						// LAI of 'growing leaves' (XLAI), excluding leaves in the last age class / Area of stil growing leaves / LAI growing leaves	
-	list<float> LFAR	;							// Leaf are index per age class	
+	list<float> LFAR	;							// Leaf area index per age class	
 	list<float>	PNLVS	;							// Potential sink capacity per leaf age class		
 	//list<float> POL_L	;							// Potential leaf area expansion rate [1,NL]	
 	
@@ -336,8 +336,9 @@ species tomato_plant
 		PLSTN	<- PLSTNI;
 		CPOOL	<- 0.0;
 		LVSN[0]	<- LVSNI*PLM2;
+		//LVSN[1] <- LVSNI*PLM2;
 		BTOTNLV	<- LVSNI*PLM2;
-		STMS[0]	<- LVSN[0];
+		STMS[0]	<- 1;
 		WLVS[0]	<- WLVSI*PLM2;
 		LFAR[0]	<- LFARI*PLM2;
 		XLAI	<- LFAR[0];
@@ -351,12 +352,15 @@ species tomato_plant
 		FWFR10	<- 0.0;
 		APFFW	<- 0.0;
 		ATT		<- WLVS[0]+LVSN[0];
-		//write "[INIT - 1] ----> WLVS --->"+WLVS;
-		//write "[INIT - 1] ----> WSTOTL ->"+WSTOTL;
+		TIME 	<- int(cycle / 24);
+		
+		
 		do save_array("PNLVS",0);
 		do save_array("RCLFA",0);
 		do save_array("RCWLV",0);
-		do save_array("LVSN",0);
+		do save_array("LVSN" ,0);
+		do save_array("DEAR" ,0);
+		do save_array("DELAR" ,0);
 	}
 	
 	
@@ -398,9 +402,11 @@ species tomato_plant
 	
 	action main_cycle
 	{
-		write "Main ----------------------> Cycle: "+cycle;
-		float PAR <- 20.1;
 		TIME <- int(cycle / 24);
+		write "Main ---------------------->"+TIME+" Cycle: "+cycle;
+		
+		float PAR <- 20.1;
+		
 		if NCSLA = 0
 		{
 			CSLA <- 1.0 ;
@@ -460,8 +466,6 @@ species tomato_plant
 		CSLA 		<- CSLA  + CSLAF  ;//         ;
 		GP			<- GP    + GPF    ;//* DTFAST ;
 		MAINT		<- MAINT + MAINTF ;//* DTFAST ;
-		//write "[fast_cycle - "+DTFAS;//T+"] ---> [GENR] ---> "+GENR;
-		//write "[main_cycle] ---> [GENR] ---> "+GENR;
 	
 			
 		save data:[   cycle
@@ -478,6 +482,7 @@ species tomato_plant
 				    , CSLA 	  
 				    , GP		    
 				    , MAINT	  
+				    , GPFN
 		] to:"ACCUM.csv" type:csv rewrite:false;
 		
 		save data:[   cycle
@@ -654,6 +659,9 @@ species tomato_plant
 					, TOTDMF
 					, CLSDMF
 					, CLSDML  
+					, TOPGR
+					, PNGP
+					, EXCESS
 		] to:"TOTALS.csv" type:csv rewrite:false;
 		
 		
@@ -683,6 +691,7 @@ species tomato_plant
 	// Calculation of death rates of leaves and the associated loss of dry matter, LAI, and numbers of leaves from each age class
 	action LOSRATE
 	{
+		do save_array("DEAR",1);
 		float XBOX <- 0.0;
 		ABNF <- 0.0;
 		float TABOR <- 0.0;
@@ -694,16 +703,19 @@ species tomato_plant
 			TABOR <- min([1.0,max([0.0,TTAB/TABK])]);
 			ABNF  <- FABOR*RCNF/PLTM2V+TABOR*RCNF/PLTM2V;
 		}
+		
 		DEAR[n_L-1] <- 0.0;
 		DEAR[n_L-1] <- XMRDR*min([LFAR[n_L-1] ,(XLAI*PLTM2V-XLAIM)/PLTM2V]);
 		DEAR[n_L-1] <- max([0.0,DEAR[n_L-1]]);
 		DATEZ	  <- TABEX(DISDAT,XDISDAT,TIME,12);
 		
+		do save_array("DEAR",2);
 		loop i from:0 to:n_L-2 step:1
 		{
 			XBOX   <- i*100/n_L;
 			DEAR[i]<- TABEX(DIS,BOX,XBOX,10)*DATEZ;
 		}
+		do save_array("DEAR",3);
 		
 		
 		do save_array("DEWLR",1);
@@ -737,13 +749,13 @@ species tomato_plant
 	action INGRAT
 	{
 		do save_array("LVSN",1);
+		do save_array("LFAR",1);
 		//write "[INGRAT - 1] ---> WLVS ---> "+WLVS;
 		float XBOX <- 0.0;
 		CPOOL <- CPOOL+(GP-RCDRW/GREF-MAINT)*DELT;
 		PLSTN <- PLSTN+GENR*DELT;
 		LVSN[n_L-1] <- LVSN[n_L-1] +(PUSHL*LVSN[n_L-2]) - DENLR[n_L-1]*DELT;
 		WLVS[n_L-1] <- WLVS[n_L-1] +(PUSHL*WLVS[n_L-2]) - DEWLR[n_L-1]*DELT;
-		//write "[INGRAT - 2] ---> WLVS ---> "+WLVS;
 		LFAR[n_L-1] <- LFAR[n_L-1] +(PUSHL*LFAR[n_L-2]) - DELAR[n_L-1]*DELT;
 		STMS[n_L-1] <- STMS[n_L-1] + PUSHL*STMS[n_L-2] * DELT;
 		WSTM[n_L-1] <- WSTM[n_L-1] + PUSHL*WSTM[n_L-2] * DELT;
@@ -751,8 +763,7 @@ species tomato_plant
 		int II <- 0;
 		loop i from:1 to:n_L-2 step:1
 		{
-			II <- n_L-i;
-			//write "II --> "+II;
+			II <- n_L-(i+1);
 			LVSN[II]<-LVSN[II] + PUSHL*(LVSN[II-1]-LVSN[II])*DELT-DENLR[II]*DELT;
 			STMS[II]<-STMS[II] + PUSHL*(STMS[II-1]-STMS[II])*DELT;
 			WLVS[II]<-WLVS[II] +(PUSHL*(WLVS[II-1]-WLVS[II])+RCWLV[II])*DELT-DEWLR[II]*DELT;
@@ -770,12 +781,13 @@ species tomato_plant
 		FRTN[n_F-1] <- FRTN[n_F-1]+(PUSHM*FRTN[n_F-2]-DENFR[n_F-1])*DELT;
 		WFRT[n_F-1] <- WFRT[n_F-1]+(PUSHM*WFRT[n_F-2]-DEWFR[n_F-1])*DELT;
 		
+		do save_array("LFAR",2);
 
 		loop i from:1 to:n_F-2 step:1
 		{
-			II <- n_F-i;
-			FRTN[II] <- FRTN[II]+ PUSHM*(FRTN[II-2]-FRTN[II])*DELT-DENFR[II]*DELT;
-			WFRT[II] <- WFRT[II]+(PUSHM*(WFRT[II-2]-WFRT[II])+RCWFR[II])*DELT-DEWFR[II]*DELT;
+			II <- n_F-(i+1);
+			FRTN[II] <- FRTN[II]+ PUSHM*(FRTN[II-1]-FRTN[II])*DELT-DENFR[II]*DELT;
+			WFRT[II] <- WFRT[II]+(PUSHM*(WFRT[II-1]-WFRT[II])+RCWFR[II])*DELT-DEWFR[II]*DELT;
 		}
 	
 		
@@ -869,198 +881,226 @@ species tomato_plant
 	
 	action save_array(string array, int stp)
 	{
+		string folder <- "output/";
+		int hour_cyc <- cycle mod 24; 
 		switch array
 		{
 			match "RCWLV"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, RCWLV
-				] to:"RCWLV_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/RCWLV_G.csv" type:csv rewrite:false;
 			}
 			match "WLVS"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, WLVS
-				] to:"WLVS_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/WLVS_G.csv" type:csv rewrite:false;
 			}
 			match "RCLFA"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, RCLFA
-				] to:"RCLFA_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/RCLFA_G.csv" type:csv rewrite:false;
 			}
 			match "LFAR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, LFAR
-				] to:"LFAR_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/LFAR_G.csv" type:csv rewrite:false;
 			}
 			match "RCWFR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, RCWFR
-				] to:"RCWFR_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/RCWFR_G.csv" type:csv rewrite:false;
 			}
 			match "PNLVS"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, PNLVS
-				] to:"PNLVS_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/PNLVS_G.csv" type:csv rewrite:false;
 			}
 			match "LVSN"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, LVSN
-				] to:"LVSN_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/LVSN_G.csv" type:csv rewrite:false;
 			}
 			match "PNTSM"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, PNTSM
-				] to:"PNTSM_G.csv" type:csv rewrite:false;
+				] to:folder+"stem/PNTSM_G.csv" type:csv rewrite:false;
 			}
 			match "STMS"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, STMS
-				] to:"STMS_G.csv" type:csv rewrite:false;
+				] to:folder+"stem/STMS_G.csv" type:csv rewrite:false;
 			}
 			match "RCWST"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, RCWST
-				] to:"RCWST_G.csv" type:csv rewrite:false;
+				] to:folder+"stem/RCWST_G.csv" type:csv rewrite:false;
 			}
 			match "WSTM"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, WSTM
-				] to:"WSTM_G.csv" type:csv rewrite:false;
+				] to:folder+"stem/WSTM_G.csv" type:csv rewrite:false;
 			}
 			match "DEAR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, DEAR
-				] to:"DEAR_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/DEAR_G.csv" type:csv rewrite:false;
 			}
 			match "AVWL"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, AVWL
-				] to:"AVWL_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/AVWL_G.csv" type:csv rewrite:false;
 			}
 			match "DEWLR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, DEWLR
-				] to:"DEWLR_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/DEWLR_G.csv" type:csv rewrite:false;
 			}
 			match "DELAR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, step
 					, DELAR
-				] to:"DELAR_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/DELAR_G.csv" type:csv rewrite:false;
 			}
 			match "DENLR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, DENLR
-				] to:"DENLR_G.csv" type:csv rewrite:false;
+				] to:folder+"leaves/DENLR_G.csv" type:csv rewrite:false;
 			}
 			match "FRTN"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, FRTN
-				] to:"FRTN_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/FRTN_G.csv" type:csv rewrite:false;
 			}
 			match "WFRT"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, WFRT
-				] to:"WFRT_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/WFRT_G.csv" type:csv rewrite:false;
 			}
 			match "AVWF"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, AVWF
-				] to:"AVWF_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/AVWF_G.csv" type:csv rewrite:false;
 			}
 			match "DENFR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, DENFR
-				] to:"DENFR_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/DENFR_G.csv" type:csv rewrite:false;
 			}
 			match "DEWFR"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, DEWFR
-				] to:"DEWFR_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/DEWFR_G.csv" type:csv rewrite:false;
 			}
 			match "PNFRT"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, PNFRT
-				] to:"PNFRT_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/PNFRT_G.csv" type:csv rewrite:false;
 			}
 			match "DEAF"
 			{
 				save data:[   cycle
-					, cycle mod 24
+					, hour_cyc
 					, stp
 					, DEAF
-				] to:"DEAF_G.csv" type:csv rewrite:false;
+				] to:folder+"fruit/DEAF_G.csv" type:csv rewrite:false;
 			}
 		}// switch
 		
 	}
 	
-		
 	
+	action save_var(string var_name, int stp, float value)
+	{
+		int hour_cyc  <- cycle mod 24; 
+		string folder <- "output/"; 
+		
+		switch var_name
+		{
+			match_one["CLSDML", "XLAI", "PTNLVS","XSLA", "ASTOTL","RCNL", "ATV", "ATL", "TOTDML", "TWTLAI", "TOTWML", "WSTOTL", "TOTGL", "TOTNLV", "BTOTNLV", "DLN"]
+			{
+				folder <- "output/leaves/";
+			}
+			match_one["PTNFRT","CLSDMF","FABOR","RVRW","RTRW","RVRN","RTRN","RCNF","ABNF","TOTDMF","WTOTF","FWFR10","APFFW","TOTWMF","AVWMF","AVWML","DMCF84","TOTNF","TOTGF"]
+			{
+				folder <- "output/fruit/";
+			}
+			match_one["RCST","TOTST","TOTDMS","PTNSTM","TOTWST","WSTOTS","TOTNST"]
+			{
+				folder <- "output/stem/";
+			}
+		}
+		
+		save data:[   cycle
+					, hour_cyc
+					, stp
+					, value
+				] to:folder+var_name+".csv" type:csv rewrite:false;
+	}
 }
 
 
