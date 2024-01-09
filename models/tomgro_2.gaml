@@ -360,7 +360,8 @@ species tomato_plant
 		do save_array("RCWLV",0);
 		do save_array("LVSN" ,0);
 		do save_array("DEAR" ,0);
-		do save_array("DELAR" ,0);
+		do save_array("DELAR",0);
+		do save_var("TIME", 1,TIME);
 	}
 	
 	
@@ -403,6 +404,7 @@ species tomato_plant
 	action main_cycle
 	{
 		TIME <- int(cycle / 24);
+		do save_var("TIME", 2, TIME);
 		write "Main ---------------------->"+TIME+" Cycle: "+cycle;
 		
 		float PAR <- 20.1;
@@ -710,13 +712,16 @@ species tomato_plant
 		DEAR[n_L-1] <- 0.0;
 		DEAR[n_L-1] <- XMRDR*min([LFAR[n_L-1] ,(XLAI*PLTM2V-XLAIM)/PLTM2V]);
 		DEAR[n_L-1] <- max([0.0,DEAR[n_L-1]]);
-		DATEZ	  <- TABEX(DISDAT,XDISDAT,TIME,12);
+		DATEZ	  	<- TABEX(DISDAT,XDISDAT,TIME,12);
 		
 		//do save_array("DEAR",2);
 		loop i from:0 to:n_L-2 step:1
 		{
 			XBOX   <- i*100/n_L;
-			DEAR[i]<- TABEX(DIS,BOX,XBOX,10)*DATEZ;
+			float f_tab <- TABEX(DIS,BOX,XBOX,10);
+			do save_var("f_tab", i, f_tab);
+			do save_var("DATEZ", i, DATEZ);
+			DEAR[i]<- f_tab*DATEZ;
 		}
 		//do save_array("DEAR",3);
 		//do save_array("DEWLR",1);
@@ -868,8 +873,7 @@ species tomato_plant
 		{
 			K <- min([length(VAL),length(ARG)]);
 		}
-		
-		loop j from: 1 to: K-1
+		loop j from: 1 to: K-1 // Mod-->    from:2 -a-> from:1 
 		{
 			if !(DUMMY > ARG[j])
 			{
