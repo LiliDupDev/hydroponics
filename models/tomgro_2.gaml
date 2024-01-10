@@ -112,7 +112,7 @@ species tomato_plant
 	float RMRF	        <- 0.01		;			// Maintenance requirements of fruits
 	float FTRUSN		<- 6.0		;			// Node number on the plant that bears the first truss	
 	float WPLI			<- 1.0		;			// Initial weight per initiated leaf
-	float WPFI			<- 0.0		;			// Initial weight per initiated fruit
+	float WPFI			<- 1.0		;			// Initial weight per initiated fruit
 	float SLAMX			<- 0.075	;			// Maximum value of SLA per leaf age class
 	float SLAMN			<- 0.024	;			// Minimum value of SLA per leaf age class
 	float STDSLA		<- 0.075	;			// Standard' value of SLA at 24 C, 350 J..lmol mol-1 C02. and low PAR
@@ -354,6 +354,16 @@ species tomato_plant
 		ATT		<- WLVS[0]+LVSN[0];
 		TIME 	<- int(cycle / 24);
 		
+		
+		do save_array("PNFRT",0);
+		do save_array("RCWFR",0);
+		do save_array("DENFR",0);
+		do save_array("DEWFR",0);
+		do save_array("DEAF",0);
+		do save_array("AVWF",0);
+		do save_array("WFRT",0);
+		do save_array("FRTN",0);
+		
 	}
 	
 	
@@ -594,23 +604,13 @@ species tomato_plant
 		}
 		
 		float ZZX <- 0.0;
-		do save_array("PNFRT",0);
-		do save_var("PTNFRT",1,PTNFRT);
 		loop i from:0 to:n_F-1 step:1
 		{
 			ZZX 	<- min([1.0,max([EPS,2.0-AVWF[i]/AVFM])]);
 			XBOX	<- i*100.0/n_F;
-			
-			float tab_pof <- TABEX(POF,BOX,XBOX,10);
-			do save_var("tab_pof",i,tab_pof);
-			do save_var("TEMFAC",i,TEMFAC);
-			do save_var("FCO2D",i,FCO2D);
-			do save_var("ZZX",i,ZZX);
-			
-			PNFRT[i]<-FRTN[i]+tab_pof*TEMFAC*FCO2D*ZZX;
+			PNFRT[i]<-FRTN[i]+TABEX(POF,BOX,XBOX,10)*TEMFAC*FCO2D*ZZX;
 			PTNFRT 	<- PTNFRT+PNFRT[i];
 		}
-		do save_var("PTNFRT",2,PTNFRT);
 		do save_array("PNFRT",1);
 		
 		float PNGP	<- PTNLVS+PTNFRT+PTNSTM;
@@ -642,15 +642,11 @@ species tomato_plant
 			RCLFA[i]	<- RCWLV[i]*TABEX(ASLA,BOX,XBOX,10)*ESLA/(1+FRPT);
 		}
 		
-		//do save_array("RCWFR",0);
-		//do save_var("TOTDMF",0,TOTDMF);
-		//do save_var("PTNFRT",0,PTNFRT);
 		loop i from:0 to:n_F-1 step:1
 		{
 			RCWFR[i] <- TOTDMF*PNFRT[i]/(PTNFRT+EPS);
 		}
-		//do save_array("RCWFR",1);
-		
+		do save_array("RCWFR",1);
 		//// Save totals in CSV
 		//save data:[   cycle
 		//			, cycle mod 24
@@ -683,7 +679,7 @@ species tomato_plant
 		RCNF <- GENR*TABEX(FPN,XFPN,PLSTN-FRLG,10)*PLM2;
 		RCNF <- RCNF*max(1.0-TTH/TTMX,0.0)*max([1.0+TTL/TTMN,0.0]);
 		PUSHL<- RDVLV;//*n_L;
-		PUSHM<- RDVFR*n_F;
+		PUSHM<- RDVFR;//*n_F;
 	}
 	
 	// Calculation of death rates of leaves and the associated loss of dry matter, LAI, and numbers of leaves from each age class
@@ -725,12 +721,15 @@ species tomato_plant
 			XBOX   <- i*100/n_F;
 			DEAF[i]<- TABEX(DISF,BOX,XBOX,10)*DATEZ;
 		}
+		do save_array("DEAF",1);
 		
 		loop i from:0 to:n_F-1 step:1
 		{
 			DENFR[i] <- FRTN[i] * DEAF[i];
 			DEWFR[i] <- DENFR[i]* AVWF[i];
 		}
+		do save_array("DENFR",1);
+		do save_array("DEWFR",1);
 	}
 	
 	// Integration routine for LAI, dry matter content and numbers for each component of the plant, i.e. leaves, fruits and stems
@@ -763,6 +762,7 @@ species tomato_plant
 		WSTM[0] <- WSTM[0]+(RCST*WPLI*FRSTEM[0]-PUSHL*WSTM[0]+RCWST[0])*DELT;
 		FRPT	<- 1+FRPET[0];
 		LFAR[0] <- (RCNL*WPLI*ESLA*ASLA[0]/FRPT-PUSHL*LFAR[0]+RCLFA[0])*DELT+LFAR[0]-DELAR[0]*DELT;
+		
 		FRTN[n_F-1] <- FRTN[n_F-1]+(PUSHM*FRTN[n_F-2]-DENFR[n_F-1])*DELT;	
 		WFRT[n_F-1] <- WFRT[n_F-1]+(PUSHM*WFRT[n_F-2]-DEWFR[n_F-1])*DELT;
 		
@@ -770,14 +770,14 @@ species tomato_plant
 		{
 			II <- n_F-(i+1);
 			FRTN[II] <- FRTN[II]+ PUSHM*(FRTN[II-1]-FRTN[II])*DELT-(DENFR[II]*DELT);
-			WFRT[II] <- WFRT[II]+(PUSHM*(WFRT[II-1]-WFRT[II])+RCWFR[II])*DELT-(DEWFR[II]*DELT); // TODO: Revisar esta linea porque aqui se comienzan a lanzar los infinitos
+			WFRT[II] <- WFRT[II]+(PUSHM*(WFRT[II-1]-WFRT[II])+RCWFR[II])*DELT-(DEWFR[II]*DELT);
 		}
 		
 		FRTN[0] <- (RCNF-ABNF-PUSHM*FRTN[0])*DELT+FRTN[0]-DENFR[0]*DELT;
 		WFRT[0] <- ((RCNF-ABNF)*WPFI-PUSHM*WFRT[0]+RCWFR[0])*DELT+WFRT[0]-DEWFR[0]*DELT;
 		
-		do save_array("WFRT",0);
-		do save_array("FRTN",0);
+		do save_array("FRTN",1);
+		do save_array("WFRT",1);
 		
 		XLAI	<- 0.0;
 		TWTLAI	<- 0.0;
@@ -811,6 +811,7 @@ species tomato_plant
 			TOTWMF 	<- TOTWMF+WFRT[i];
 			TOTNF 	<- TOTNF+FRTN[i];
 		}
+		do save_array("AVWF",1);
 		
 		
 		WTOTF 	<-  TOTWMF - WFRT[n_F-1];
@@ -837,6 +838,8 @@ species tomato_plant
 		AVWMF 	<- TOTWMF/(TOTNF+EPS);
 		AVWML 	<- TOTWML/(TOTNLV+EPS);
 		DMCF84 	<- TABEX(DMC84T,XDMC,TIME,6);
+		do save_var("DMCF84",1,DMCF84);
+		DMCF84  <- DMCF84=0?EPS:DMCF84;
 		FWFR10 	<- FWFR10+(PUSHM*WFRT[n_F-2]*DELT)*100.0/DMCF84;
 		APFFW	<- ((PUSHM*(max([WFRT[n_F-2],0.0]))*DELT)*100.0/DMCF84) / ((PUSHM * FRTN[n_F-2] * DELT)+EPS);
 	}
