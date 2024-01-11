@@ -1,0 +1,2 @@
+cycle,hour,int(cycle / 24),r_l,FC,n_L,shadow_loss,prevState'N_L',currentState'N_L',prev_value,value,pl_total,chg,length(leaf_proportion),sum(leaf_proportion),leaf_proportion
+0,0,0,0.0063,1.0,10.0,0.063,0.06545342967947532,0.06545342967947532,0.00412356606980695,0.00412356606980695,0.00013090685935895,-0.00013090685935895,1,0.063,[0.063]

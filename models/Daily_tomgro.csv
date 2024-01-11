@@ -1,0 +1,2 @@
+cycle,day,currentState'N_f',currentState'N_s',currentState'N_L',currentState'W_f',currentState'W_s',currentState'W_L',currentState'A_L',prevState'N_f',prevState'N_s',prevState'N_L',prevState'W_f',prevState'W_s',prevState'W_L',prevState'A_L',d_Int'N_f',d_Int'N_s',d_Int'N_L',d_Int'W_f',d_Int'W_s',d_Int'W_L',d_Int'A_L',LAI,shadow_loss,length(leaf_aging),leaf_aging
+0,0,0.0,1.0,0.06545342967947532,0.0,0.2,0.005,0.001,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.00000095562007332,0.0,1,[0.06545342967947532]
