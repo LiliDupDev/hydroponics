@@ -111,7 +111,7 @@ species tomato_plant
 	float RMRL	        <- 0.015	;			// Relative maintenance requirements of vegetative material
 	float RMRF	        <- 0.01		;			// Maintenance requirements of fruits
 	float FTRUSN		<- 6.0		;			// Node number on the plant that bears the first truss	
-	float WPLI			<- 1.0		;			// Initial weight per initiated leaf
+	float WPLI			<- 0.0001	;			// Initial weight per initiated leaf
 	float WPFI			<- 0.0001	;			// Initial weight per initiated fruit
 	float SLAMX			<- 0.075	;			// Maximum value of SLA per leaf age class
 	float SLAMN			<- 0.024	;			// Minimum value of SLA per leaf age class
@@ -134,9 +134,9 @@ species tomato_plant
 	float TRGH			<- 1.0		;			// Transmissivity of the greenhouse cover
 	float PLM2			<- 3.0		;			// Plant density
 	float ROWSPC		<- 1.0		;			// Row spacing
-	float PLSTNI		<- 6.0		;			// Initial plastochron index
-	float LVSNI			<- 1.0		;			// Initial number of leaves per plant
-	float WLVSI			<- 0.5		;			// Initial weight of leaves
+	float PLSTNI		<- 0.0001;//6.0		;			// Initial plastochron index
+	float LVSNI			<- 0.001;//1.0		;			// Initial number of leaves per plant
+	float WLVSI			<- 0.005		;			// Initial weight of leaves
 	float LFARI			<- 0.002	;			// Initial leaf area per plant
 	float QE			<- 0.056	;	
 	float XK			<- 0.58		;
@@ -354,10 +354,16 @@ species tomato_plant
 		ATT		<- WLVS[0]+LVSN[0];
 		TIME 	<- int(cycle / 24);
 		
+		
+		do save_var("ASTOTL",0,ASTOTL);
+		do save_var("XLAI",0,XLAI);
+		do save_array("LFAR",0);
 		do save_array("LVSN",0);
 		do save_array("DENLR",0);
 		do save_array("PNLVS",0);
 		do save_array("RCLFA",0);
+		do save_array("RCWLV",0);
+		do save_array("WLVS",0);
 	}
 	
 	
@@ -553,27 +559,61 @@ species tomato_plant
 	// Calculation of photosynthesis rates, using Acock's equation at each time interval of the fast time loop
 	action PHOTO(float TMPA, float PPFD, float CO2AVG)
 	{
-		float TAU1 <- 0.06638*TU1;
-		float TAU2 <- 0.06638*TU2;
+		float TAU1 <- 0.06638*TU1; //  1.46036
+		float TAU2 <- 0.06638*TU2; //  2.3233
 		
-		PMAX <- TAU1 *CO2AVG;	
+		PMAX <- TAU1 * CO2AVG;
+		do save_var("TAU1",1,TAU1);
+		do save_var("CO2AVG",1,CO2AVG);
+		do save_var("PMAX",1,PMAX);
 		
 		if CO2AVG > 350
 		{
 			PMAX <- TAU1*350.0+TAU2*(CO2AVG-350.0);
+			do save_var("TAU2",1,TAU2);
+			do save_var("PMAX",2,PMAX);
 		}
 		
 		AEF	<- TABEX(AEFT,XAEFT,PLSTN,6);
-		PMAX<- PMAX * TABEX(PGRED,TMPG,TMPA,8)*AEF;
+		
+		// PMAX no cambia porque no cambia el nivel de co2 --> PMAX no es problema		
+		PMAX<- PMAX *  TABEX(PGRED,TMPG,TMPA,8) *AEF;
+		
+		do save_var("AEF",1,AEF);
+		do save_var("PMAX",3,PMAX);
+		
 		if PPFD >= 0.001
 		{
 			
 			float TOP <- (1.0-XM)*PMAX + QE*XK*PPFD;
 			float BOT <- (1.0-XM)*PMAX + QE*XK*PPFD*exp(-XK*ASTOTL*PLTM2V); 
 
-			GPF	<- (PMAX/XK);//*ln(TOP/BOT);
-			GPF <- GPF * 0.682;
-			GPF <- GPF * 3.8016;
+			GPF	<- (PMAX/XK)*ln(TOP/BOT);
+			//GPF <- GPF * 0.682;
+			//GPF <- GPF * 3.8016;
+			float GPF_1 <- GPF * 0.682;
+			float GPF_2 <- GPF_1 * 3.8016;
+			
+			
+			save data:[ cycle
+					,	XM
+					, 	PMAX
+					, 	QE
+					,	XK
+					, 	PPFD
+					,	TMPA
+					,	CO2AVG
+					,	ASTOTL
+					,	PLTM2V
+					,	TOP
+					,	BOT 
+					,	GPF
+					,	GPF_1
+					,	GPF_2
+			] to:"output/PHOTO.csv" type:csv rewrite:false;
+			
+			GPF <- GPF_2;
+			
 		}
 		
 	}
@@ -590,15 +630,37 @@ species tomato_plant
 	action DMRATE(float PAR)
 	{
 		float PARSLA <- 1-TABEX(PART,XPART,PAR,5); //COMPUTE SPECIFIC LEAF AREA GROWTH FACTOR BASED ON DAILY PAR
+		do save_var("PARSLA",1,PARSLA);
+		
 		ESLA <- STDSLA*PARSLA/(TSLA*CSLA);
+		do save_var("STDSLA",1,ESLA);
+		do save_var("TSLA",1,ESLA);
+		do save_var("CSLA",1,ESLA);
+		do save_var("ESLA",1,ESLA);
 		ESLA <- max([0.018,ESLA]);
+		do save_var("ESLA",2,ESLA);
 		ESLA <- min([SLAMX,ESLA]);
+		do save_var("ESLA",3,ESLA);
 		
 		//write "ESLA: "+ESLA;
 		float TRCDRW <- (GP/PLTM2V-MAINT)*GREF;
 		TRCDRW <- max([TRCDRW,0.0]);
 		
-		RCDRW  <- TRCDRW*(1.0-TABEX(PROOT,XROOT,PLSTN,6))*min([max([EPS,CLSDML])/ZBENG,1.0])*TEMFAC;
+		do save_var("GP",1,GP);
+		do save_var("GREF",1,GREF);
+		do save_var("MAINT",1,MAINT);
+		do save_var("PLTM2V",1,PLTM2V);
+		do save_var("TRCDRW",1,TRCDRW);
+		
+		float T_trcdrm <- TABEX(PROOT,XROOT,PLSTN,6); 
+		RCDRW  <- TRCDRW*(1.0-T_trcdrm)*min([max([EPS,CLSDML])/ZBENG,1.0])*TEMFAC;
+		do save_var("T_trcdrm",1,T_trcdrm);
+		do save_var("PLSTN",2,PLSTN);
+		do save_var("ZBENG",1,ZBENG);
+		do save_var("TEMFAC",2,TEMFAC);
+		do save_var("CLSDML_3",1,CLSDML);
+		do save_var("RCDRW",1,RCDRW);
+
 		PTNLVS <- 0.0 ;
 		PTNSTM <- 0.0 ;
 		float XBOX <- 0.0;
@@ -608,7 +670,19 @@ species tomato_plant
 		loop i from:0 to:n_L-1 step:1
 		{
 			XBOX 	<- i*100.0/n_L;
-			RCLFA[i]<- LVSN[i]*TABEX(POL,BOX,XBOX,10)*TEMFAC*FCO2D;
+			float tab <- TABEX(POL,BOX,XBOX,10);
+			RCLFA[i]<- LVSN[i]*tab*TEMFAC*FCO2D;
+			
+			save data:[ cycle
+					, 	i
+					,	LVSN[i]
+					,	tab
+					,	TEMFAC
+					,	FCO2D
+					,	RCLFA[i]
+			] to:"output/RCLFA_CH.csv" type:csv rewrite:false;
+			
+			
 			FRPT 	<- TABEX(FRPET,BOX,XBOX,10);
 			FRST 	<- TABEX(FRSTEM,BOX,XBOX,10);
 			PNLVS[i]<- (RCLFA[i]/TABEX(ASLA,BOX,XBOX,10)*ESLA)*(1.0+FRPT);
@@ -630,6 +704,7 @@ species tomato_plant
 			PTNFRT 	<- PTNFRT+PNFRT[i];
 		}
 		float PNGP	<- PTNLVS+PTNFRT+PTNSTM;
+		do save_var("PNGP",1,PNGP);
 		TOTDML		<- min([RCDRW*PTNLVS/(PNGP+EPS),PTNLVS]);//min([RCDRW*PTNLVS/(PNGP+EPS),PTNLVS]);
 		TOTDMS		<- min([RCDRW*PTNSTM/(PNGP+EPS),PTNSTM]);
 		TOTDMF		<- min([RCDRW*PTNFRT/(PNGP+EPS),PTNFRT]);
@@ -658,6 +733,9 @@ species tomato_plant
 			FRPT		<- TABEX(FRPET,BOX,XBOX,10);
 			RCLFA[i]	<- RCWLV[i]*TABEX(ASLA,BOX,XBOX,10)*ESLA/(1+FRPT);
 		}
+		
+		do save_array("RCLFA",2);
+		do save_array("RCWLV",1);
 		
 		loop i from:0 to:n_F-1 step:1
 		{
@@ -780,12 +858,20 @@ species tomato_plant
 		LVSN[0] <- (RCNL-PUSHL*LVSN[0]*DELT)+LVSN[0]-DENLR[0]*DELT;
 		
 		do save_array("LVSN",1);
+		do save_array("WLVS",1);
+		do save_array("DENLR",1);
+		do save_array("DEWLR",1);
+		do save_array("RCWLV",1);
+		do save_array("DELAR",1);
 	
 		STMS[0] <- STMS[0]+(RCST-PUSHL*STMS[0])*DELT;
 		WLVS[0] <- (RCNL*WPLI-PUSHL*WLVS[0]+RCWLV[0])*DELT+WLVS[0]-DEWLR[0]*DELT;
 		WSTM[0] <- WSTM[0]+(RCST*WPLI*FRSTEM[0]-PUSHL*WSTM[0]+RCWST[0])*DELT;
 		FRPT	<- 1+FRPET[0];
+		do save_var("FRPT",1,FRPT);
 		LFAR[0] <- (RCNL*WPLI*ESLA*ASLA[0]/FRPT-PUSHL*LFAR[0]+RCLFA[0])*DELT+LFAR[0]-DELAR[0]*DELT;
+		
+		do save_array("LFAR",1);
 		
 		FRTN[n_F-1] <- FRTN[n_F-1]+(PUSHM*FRTN[n_F-2]-DENFR[n_F-1])*DELT;	
 		WFRT[n_F-1] <- WFRT[n_F-1]+(PUSHM*WFRT[n_F-2]-DEWFR[n_F-1])*DELT;
@@ -823,6 +909,8 @@ species tomato_plant
 			TOTWST	<- TOTWST+WSTM[i];
 		}		
 		
+		do save_var("XLAI",1,XLAI);
+		
 		XSLA <- XLAI * (TWTLAI + EPS)*10000.0;
 		TOTWMF <- 0.0 ;
 		TOTNF  <- 0.0 ;
@@ -845,6 +933,7 @@ species tomato_plant
 		WSTOTL 	<- TOTWML - WLVS[n_L-1];
 		TOTGL 	<- TOTNLV - LVSN[n_L-1];
 		ASTOTL 	<- XLAI   - LFAR[n_L-1];
+		do save_var("ASTOTL",1,ASTOTL);
 		TOTST 	<- TOTNST - STMS[n_L-1];
 		WSTOTS 	<- TOTWST - WSTM[n_L-1];	
 		TOTDW 	<- TOTWMF + TOTWML + TOTWST;
