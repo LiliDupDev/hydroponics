@@ -132,10 +132,9 @@ species tomato_plant
 	int   NFAST			<- 24		;			// Number of time steps within the fast loop during one day
 	int   INTOUT		<- 7		;			// lntervaI for output
 	float TRGH			<- 1.0		;			// Transmissivity of the greenhouse cover
-	float PLM2			<- 3.0		;			// Plant density
-	float ROWSPC		<- 1.0		;			// Row spacing
-	float PLSTNI		<- 0.0001;//6.0		;			// Initial plastochron index
-	float LVSNI			<- 0.001;//1.0		;			// Initial number of leaves per plant
+	float PLM2			<- 0.005		;			// Plant density // 3.0
+	float PLSTNI		<- 0.001;//6.0		;			// Initial plastochron index
+	float LVSNI			<- 1.0;//1.0		;			// Initial number of leaves per plant
 	float WLVSI			<- 0.005		;			// Initial weight of leaves
 	float LFARI			<- 0.002	;			// Initial leaf area per plant
 	float QE			<- 0.056	;	
@@ -145,7 +144,7 @@ species tomato_plant
 		                        
 	
 	/* ******************************  GENERAL  ******************************** */
-	float PLTM2V		<- 22.0		;
+	float PLTM2V		<- 5.0;//22.0		;
 	// Setting variable accumulates through a day
 	int   TIME			<- 0	;				// Days
 	float GP 		    <- 0.0 	;				// Gross photosynthesis
@@ -355,6 +354,15 @@ species tomato_plant
 		TIME 	<- int(cycle / 24);
 		
 		
+		
+		CLSDML <-  1.0;
+		TEMFAC <- 20.0;
+		TEMFCF <- 0.86;
+		PTNLVS <- 0.0005;
+		GP <- 34.0;
+		MAINT <- 0.005;
+		
+		
 		do save_var("ASTOTL",0,ASTOTL);
 		do save_var("XLAI",0,XLAI);
 		do save_array("LFAR",0);
@@ -408,7 +416,6 @@ species tomato_plant
 		TIME <- int(cycle / 24);
 		write "Main ----------------------> Day: "+TIME+" Cycle: "+cycle;
 		
-		do save_var("EPS",0,EPS);
 		float PAR <- 20.1;
 		
 		if NCSLA = 0
@@ -445,7 +452,6 @@ species tomato_plant
 	action fast_cycle(float temp, float co2, float ppfd)
 	{
 		// We don´t have an equivalent to GHOUSE, we gave the parameters
-		
 		// DEVFAST 	--> Calculation of daily development rates of leaves, fruits and stems
 		do DEVFAST(temp,ppfd,co2);
 		// PHOTO 	--> Calculation of photosynthesis rates, using Acock's equation at each time interval of the fast time loop
@@ -630,17 +636,17 @@ species tomato_plant
 	action DMRATE(float PAR)
 	{
 		float PARSLA <- 1-TABEX(PART,XPART,PAR,5); //COMPUTE SPECIFIC LEAF AREA GROWTH FACTOR BASED ON DAILY PAR
-		do save_var("PARSLA",1,PARSLA);
+		//do save_var("PARSLA",1,PARSLA);
 		
 		ESLA <- STDSLA*PARSLA/(TSLA*CSLA);
-		do save_var("STDSLA",1,ESLA);
-		do save_var("TSLA",1,ESLA);
-		do save_var("CSLA",1,ESLA);
-		do save_var("ESLA",1,ESLA);
+		//do save_var("STDSLA",1,ESLA);
+		//do save_var("TSLA",1,TSLA);
+		//do save_var("CSLA",1,CSLA);
+		//do save_var("ESLA",1,ESLA);
 		ESLA <- max([0.018,ESLA]);
-		do save_var("ESLA",2,ESLA);
+		//do save_var("ESLA",2,ESLA);
 		ESLA <- min([SLAMX,ESLA]);
-		do save_var("ESLA",3,ESLA);
+		//do save_var("ESLA",3,ESLA);
 		
 		//write "ESLA: "+ESLA;
 		float TRCDRW <- (GP/PLTM2V-MAINT)*GREF;
@@ -653,7 +659,7 @@ species tomato_plant
 		do save_var("TRCDRW",1,TRCDRW);
 		
 		float T_trcdrm <- TABEX(PROOT,XROOT,PLSTN,6); 
-		RCDRW  <- TRCDRW*(1.0-T_trcdrm)*min([max([EPS,CLSDML])/ZBENG,1.0])*TEMFAC;
+		RCDRW  <- TRCDRW*(1.0-T_trcdrm)*min([max([EPS,CLSDML])/ZBENG,1.0])*TEMFAC; 
 		do save_var("T_trcdrm",1,T_trcdrm);
 		do save_var("PLSTN",2,PLSTN);
 		do save_var("ZBENG",1,ZBENG);
