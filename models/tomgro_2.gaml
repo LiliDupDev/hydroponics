@@ -132,10 +132,10 @@ species tomato_plant
 	int   NFAST			<- 24		;			// Number of time steps within the fast loop during one day
 	int   INTOUT		<- 7		;			// lntervaI for output
 	float TRGH			<- 1.0		;			// Transmissivity of the greenhouse cover
-	float PLM2			<- 0.005		;			// Plant density // 3.0
-	float PLSTNI		<- 0.001;//6.0		;			// Initial plastochron index
-	float LVSNI			<- 1.0;//1.0		;			// Initial number of leaves per plant
-	float WLVSI			<- 0.005		;			// Initial weight of leaves
+	float PLM2			<- 3.0		;			// Plant density // 3.0
+	float PLSTNI		<- 6.0;//6.0		;			// Initial plastochron index
+	float LVSNI			<- 6.0;//1.0		;			// Initial number of leaves per plant
+	float WLVSI			<- 0.005		;		// Initial weight of leaves
 	float LFARI			<- 0.002	;			// Initial leaf area per plant
 	float QE			<- 0.056	;	
 	float XK			<- 0.58		;
@@ -359,8 +359,8 @@ species tomato_plant
 		TEMFAC <- 20.0;
 		TEMFCF <- 0.86;
 		PTNLVS <- 0.0005;
-		GP <- 34.0;
-		MAINT <- 0.005;
+		GP 	   <- 34.0;
+		MAINT  <- 0.005;
 		
 		
 		do save_var("ASTOTL",0,ASTOTL);
@@ -540,14 +540,11 @@ species tomato_plant
 		//GENRF <- TEMFCF*GENFAC*CLSDML*tabex_genrf;
 		
 		do save_var("CLSDML_2",1,CLSDML);
-		do save_var("tabex_genrf",1,tabex_genrf);
 		do save_var("GENFAC",1,GENFAC);
 		do save_var("GENRF",2,GENRF);
 		
 		float age_leaf <- TABEX(RDVLVT,XLV,TMPA,9);
 		RDVLVF	<- age_leaf*SPTEL*FCO2;								// Compute leaf aging
-		do save_var("age_leaf",1,age_leaf);
-		do save_var("SPTEL",1,SPTEL);
 		do save_var("RDVLVF",1,RDVLVF);
 		
 		RDVFRF	<- TABEX(RDVFRT,XFRT,TMPA,9)*SPTEL*FCO2;							// Compute fruit aging
@@ -569,14 +566,10 @@ species tomato_plant
 		float TAU2 <- 0.06638*TU2; //  2.3233
 		
 		PMAX <- TAU1 * CO2AVG;
-		do save_var("TAU1",1,TAU1);
-		do save_var("CO2AVG",1,CO2AVG);
-		do save_var("PMAX",1,PMAX);
 		
 		if CO2AVG > 350
 		{
 			PMAX <- TAU1*350.0+TAU2*(CO2AVG-350.0);
-			do save_var("TAU2",1,TAU2);
 			do save_var("PMAX",2,PMAX);
 		}
 		
@@ -585,7 +578,6 @@ species tomato_plant
 		// PMAX no cambia porque no cambia el nivel de co2 --> PMAX no es problema		
 		PMAX<- PMAX *  TABEX(PGRED,TMPG,TMPA,8) *AEF;
 		
-		do save_var("AEF",1,AEF);
 		do save_var("PMAX",3,PMAX);
 		
 		if PPFD >= 0.001
@@ -662,9 +654,6 @@ species tomato_plant
 		RCDRW  <- TRCDRW*(1.0-T_trcdrm)*min([max([EPS,CLSDML])/ZBENG,1.0])*TEMFAC; 
 		do save_var("T_trcdrm",1,T_trcdrm);
 		do save_var("PLSTN",2,PLSTN);
-		do save_var("ZBENG",1,ZBENG);
-		do save_var("TEMFAC",2,TEMFAC);
-		do save_var("CLSDML_3",1,CLSDML);
 		do save_var("RCDRW",1,RCDRW);
 
 		PTNLVS <- 0.0 ;
@@ -863,6 +852,7 @@ species tomato_plant
 		}
 		LVSN[0] <- (RCNL-PUSHL*LVSN[0]*DELT)+LVSN[0]-DENLR[0]*DELT;
 		
+		do save_array("STMS",1);
 		do save_array("LVSN",1);
 		do save_array("WLVS",1);
 		do save_array("DENLR",1);
@@ -892,6 +882,8 @@ species tomato_plant
 		FRTN[0] <- (RCNF-ABNF-PUSHM*FRTN[0])*DELT+FRTN[0]-DENFR[0]*DELT;
 		WFRT[0] <- ((RCNF-ABNF)*WPFI-PUSHM*WFRT[0]+RCWFR[0])*DELT+WFRT[0]-DEWFR[0]*DELT;
 		
+		do save_array("FRTN",1);
+		do save_array("WFRT",1);
 		
 		XLAI	<- 0.0;
 		TWTLAI	<- 0.0;
