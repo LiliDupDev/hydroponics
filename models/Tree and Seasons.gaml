@@ -58,7 +58,8 @@ species seasons {
 	rgb 		fruit_color <- fruit_color_list[0];
 	map<string, float> energy_map <- ["winter"::0.0, "spring"::0.3, "summer"::0.08, "autumn"::0];
 
-	init {
+	init 
+	{
 		do change_color;
 	}
 
@@ -168,11 +169,12 @@ species burgeon parent: tree_part {
 
 species trunk parent: tree_part {
 	float length <- 0.0;
-	float width <- 0.0;
+	float width <- 0.0; 
 	bool can_split <- true;
 
 	aspect default {
 		draw line([base, end], width) color: season.branch_color; // border: #red;
+		draw "TRUNK= "+name at: end + {-3,1.5} color: #black font: font('Default', 12, #bold) ; 
 	}
 
 	reflex growth {
@@ -190,6 +192,7 @@ species trunk parent: tree_part {
 		float branch2_alpha <- rnd(100) / 100 * 360;
 		float branch2_beta <- 30 + rnd(100) / 100 * 40;
 		can_split <- false;
+		
 		create burgeon number: 1 {
 			self.level <- myself.level + 1.9;
 			self.base <- myself.end;
@@ -374,6 +377,7 @@ species fruit {
 	float beta;
 	float fall <- 0.0;
 	int fall_shift <- int(rnd(season.season_duration / 2.5)); //unused
+	
 	aspect default {
 		if (season.current_season = "spring") {
 			draw line([base, end], 0.1) color: season.leaf_color;
