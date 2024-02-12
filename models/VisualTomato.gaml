@@ -114,19 +114,6 @@ species burgeon parent: plant_part
 			if myself.parent != nil {
 				myself.parent.children <- myself.parent.children + tmp;
 			}
-			
-			 /*
-			save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-			] to:"stem_properties.csv" type:csv rewrite:false;
-			* 
-			*/
 		}
 		
 		
@@ -188,11 +175,13 @@ species stem parent: plant_part
 			
 		}
 		
-		
+		/*
 		save data:[   	cycle
 					,	name
+					, 	parent.name
 					,	is_main_stem
 					,	can_split
+					,	is_branch
 					,  	energy
 					,	level
 					,	length
@@ -204,79 +193,44 @@ species stem parent: plant_part
 					,	end.y
 					,	end.z
 			] to:"stem_growth.csv" type:csv rewrite:false;	
+		 */
 			
-		
 	}
 	
+	
+	// Only elements in the main stem can split
 	reflex split when: can_split and (level < max_level) and (min_energy < energy) {
-		
 		can_split <- false;
 		
 		int possible_burgeon <- rnd(8);
-		
-		
 		loop i from: 0 to: possible_burgeon
 		{
 			float branch1_alpha	<- rnd(100) / 100 * 360;
 			float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
-			//float branch2_alpha <- rnd(100) / 100 * 360;
-			//float branch2_beta 	<- 30 + rnd(100) / 100 * 40;
 			//if flip(0.7) 
 			//{
 				create burgeon number: 1 {
 					self.level 	<- myself.level + 2.1;
-					//self.base 	<- myself.end;
-					//self.end 	<- self.base;
 					self.base 	<- myself.end;
 					self.end	<- myself.end;
 					self.alpha 	<- branch1_alpha;
 					self.beta 	<- branch1_beta;
 					self.parent <- myself;
-					
-					/* 
-					save data:[ cycle
-						,	self.parent.name
-						,	self.name
-						,  	self.alpha
-						,	self.beta
-						, 	self.level
-						,	self.base
-						,	self.end
-					] to:"stem_properties.csv" type:csv rewrite:false;
-					*/
 				}
 			
 			//}		
 		} 
 		
 		
-		
-		
 
 		create stem number: 1 {
 			self.level 			<- myself.level + 0.3;
-			
-			//self.base 		<- myself.end;
-			//self.end 			<- self.end;
-			
 			self.base			<- myself.base;
 			self.end			<- myself.base;
 			self.alpha 			<- myself.alpha - 10 + rnd(200) / 10;
 			self.beta 			<- myself.beta - 10 + rnd(200) / 10;
 			self.parent 		<- myself;
 			self.is_main_stem 	<- false;
-			
-			/*
-			save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-				] to:"stem_properties.csv" type:csv rewrite:false;
-			*/
 		}
 
 	}
@@ -315,149 +269,98 @@ species leaf
 	
 	
 	reflex split when: (level < max_level) and flip(1 - exp(level * (min_energy - parent.energy) / 50)) {
-		int side1 <- -1 + 2 * rnd(1);
-		int side2 <- -1 + 2 * rnd(1);
-		int side3 <- -1 + 2 * rnd(1);
-		int side4 <- -1 + 2 * rnd(1);
-		float factor <- secondary_split_angle_alpha / 100;
-		float branch1_alpha <- parent.alpha + side1 * rnd(100) / 100 * main_split_angle_alpha;
-		float branch2_alpha <- parent.alpha - side1 * rnd(100) * factor;
-		float branch3_alpha <- parent.alpha + side3 * rnd(100) * factor;
-		float branch4_alpha <- parent.alpha - side3 * rnd(100) * factor;
-		int sideb <- -1 + 2 * rnd(1);
-		 factor <- secondary_split_angle_beta / 100;
-		float branch1_beta <- parent.beta + sideb * rnd(100) / 100 * main_split_angle_beta;
-		float branch2_beta <- -20 + rnd(100) * factor;
-		float branch3_beta <- -20 + rnd(100) * factor;
-		float branch4_beta <- -20 + rnd(100) * factor;
 		
-		create burgeon number: 1 {
-			self.level 	<- myself.parent.level + 1;
-			self.base 	<- myself.base;
-			self.end 	<- self.base;
-			self.alpha 	<- branch1_alpha;
-			self.beta 	<- branch1_beta;
-			self.parent <- myself.parent;
+		if level < max_level
+		{
 			
+			int side1 <- -1 + 2 * rnd(1);
+			int side3 <- -1 + 2 * rnd(1);
 			
+			float factor <- secondary_split_angle_alpha / 100;
+			float branch1_alpha <- parent.alpha + side1 * rnd(100) / 100 * main_split_angle_alpha;
+			float branch2_alpha <- parent.alpha - side1 * rnd(100) * factor;
+			float branch3_alpha <- parent.alpha + side3 * rnd(100) * factor;
+			float branch4_alpha <- parent.alpha - side3 * rnd(100) * factor;
+			int sideb <- -1 + 2 * rnd(1);
+			 factor <- secondary_split_angle_beta / 100;
+			float branch1_beta <- parent.beta + sideb * rnd(100) / 100 * main_split_angle_beta;
+			float branch2_beta <- -20 + rnd(100) * factor;
+			float branch3_beta <- -20 + rnd(100) * factor;
+			float branch4_beta <- -20 + rnd(100) * factor;
+			
+			create burgeon number: 1 {
+				self.level 	<- myself.parent.level + 1;
+				self.base 	<- myself.base;
+				self.end 	<- self.base;
+				self.alpha 	<- branch1_alpha;
+				self.beta 	<- branch1_beta;
+				self.parent <- myself.parent;
+			}
+	
+			create burgeon number: 1 {
+				self.level 	<- myself.parent.level + 1.2;
+				self.base 	<- myself.base;
+				self.end 	<- self.base;
+				self.alpha 	<- branch2_alpha;
+				self.beta 	<- branch2_beta;
+				self.parent <- myself.parent;
+			}
+	
+			if flip(0.6) {
+				create burgeon number: 1 {
+					self.level 	<- myself.parent.level + 1.7;
+					self.base 	<- myself.base;
+					self.end 	<- self.base;
+					self.alpha 	<- branch3_alpha;
+					self.beta 	<- branch3_beta;
+					self.parent <- myself.parent;
+				}
+	
+			}
+	
+			if flip(0.3) {
+				create burgeon number: 1 {
+					self.level 	<- myself.parent.level + 2;
+					self.base 	<- myself.base;
+					self.end 	<- self.base;
+					self.alpha 	<- branch4_alpha;
+					self.beta 	<- branch4_beta;
+					self.parent <- myself.parent;
+				}
+	
+			}
+	
+			if flip(0.8) {
+				create burgeon number: 1 {
+					self.level 	<- myself.parent.level + 3.5;
+					self.base 	<- myself.base;
+					self.end 	<- self.base;
+					self.alpha 	<- branch4_alpha;
+					self.beta 	<- branch4_beta;
+					self.parent <- myself.parent;
+				}
+	
+			}
+	
 			/*
-			save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-				] to:"stem_properties.csv" type:csv rewrite:false;
+			if flip(0.9) {
+				create fruit number: (1 + rnd(2)) {
+					self.base 	<- myself.base;
+					self.end 	<- myself.base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
+					self.parent <- myself.parent;
+					self.alpha 	<- myself.alpha + (-1 + 2 * rnd(1)) * 30;
+					self.beta 	<- -40.0 + rnd(80);
+				}
+				
+				//write "fruit created";
+			 
+			}
 			*/
-		}
-
-		create burgeon number: 1 {
-			self.level 	<- myself.parent.level + 1.2;
-			self.base 	<- myself.base;
-			self.end 	<- self.base;
-			self.alpha 	<- branch2_alpha;
-			self.beta 	<- branch2_beta;
-			self.parent <- myself.parent;
-			/* 
-			save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-				] to:"stem_properties.csv" type:csv rewrite:false;	
-			*/
-		}
-
-		if flip(0.6) {
-			create burgeon number: 1 {
-				self.level 	<- myself.parent.level + 1.7;
-				self.base 	<- myself.base;
-				self.end 	<- self.base;
-				self.alpha 	<- branch3_alpha;
-				self.beta 	<- branch3_beta;
-				self.parent <- myself.parent;
-				/*
-				save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-				] to:"stem_properties.csv" type:csv rewrite:false;
-				*/
-			}
-
-		}
-
-		if flip(0.3) {
-			create burgeon number: 1 {
-				self.level 	<- myself.parent.level + 2;
-				self.base 	<- myself.base;
-				self.end 	<- self.base;
-				self.alpha 	<- branch4_alpha;
-				self.beta 	<- branch4_beta;
-				self.parent <- myself.parent;
-				/*
-				save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-				] to:"stem_properties.csv" type:csv rewrite:false;
-				*/
-			}
-
-		}
-
-		if flip(0.8) {
-			create burgeon number: 1 {
-				self.level 	<- myself.parent.level + 3.5;
-				self.base 	<- myself.base;
-				self.end 	<- self.base;
-				self.alpha 	<- branch4_alpha;
-				self.beta 	<- branch4_beta;
-				self.parent <- myself.parent;
-				/*
-				save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-				] to:"stem_properties.csv" type:csv rewrite:false;			
-				*/
-			}
-
-		}
-
-		/*
-		if flip(0.9) {
-			create fruit number: (1 + rnd(2)) {
-				self.base 	<- myself.base;
-				self.end 	<- myself.base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
-				self.parent <- myself.parent;
-				self.alpha 	<- myself.alpha + (-1 + 2 * rnd(1)) * 30;
-				self.beta 	<- -40.0 + rnd(80);
-			}
 			
-			//write "fruit created";
-		 
+			self.parent.children <- self.parent.children - self;		
 		}
-		*/
+
 		
-		self.parent.children <- self.parent.children - self;
 		do die;
 	}
 	
