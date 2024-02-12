@@ -13,10 +13,14 @@ global
 	float 	width 		<- shape.width;
 	float 	height 		<- shape.height;
 	point 	main_pos 	<- {width / 2, height / 2};
-	float 	length_max 	<- 100.0;
-	float 	width_ini 	<- 1.0;
-	float 	level_step 	<- 0.8;
+	float 	length_max 	<- 75.0;//100.0;
+	float 	width_ini 	<- 0.5; // 1.0
+	float 	max_width_stem		<- 2.0;
+	float 	max_width_branch	<- 1.5;
+	float 	max_branch_length	<- 5.0;
+	float 	level_step 	<- 0.8; // 0.8
 	float 	env_size 	<- 0.5 * length_max / (1 - level_step);
+	
 	
 	int 	max_level 	<- 7;//8;
 	float 	min_energy 	<- 100.0;//300.0
@@ -161,7 +165,7 @@ species stem parent: plant_part
 			// Este código es crecimiento 
 			float level_correction <- 1.8 * 0.3 ^ level;
 			length 		<- level_correction * (length_max * (1 - min([1, exp(-energy / 1000)])));
-			width 		<- length / level_correction / 13.0;
+			width 		<- width > max_width_stem ? width :length / level_correction / 13.0;
 			end 		<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};	
 			base 		<- end - {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
 			parent.base <- end;
@@ -169,13 +173,13 @@ species stem parent: plant_part
 		else
 		{
 			base 	<- parent.end;
-			length 	<- level_step ^ level * (length_max * (1 - min([1, exp(-energy / 1000)])));
-			width 	<- length / 10 * (4 + max_level - level) / (4 + max_level);
+			length 	<- length > max_branch_length ? length :level_step ^ level * (length_max * (1 - min([1, exp(-energy / 1000)])));
+			width 	<- width > max_width_branch ? width :length / 10 * (4 + max_level - level) / (4 + max_level);
 			end 	<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
 			
 		}
 		
-		/*
+		/* 
 		save data:[   	cycle
 					,	name
 					, 	parent.name
@@ -202,13 +206,15 @@ species stem parent: plant_part
 	reflex split when: can_split and (level < max_level) and (min_energy < energy) {
 		can_split <- false;
 		
+		
+		
 		int possible_burgeon <- rnd(8);
 		loop i from: 0 to: possible_burgeon
 		{
 			float branch1_alpha	<- rnd(100) / 100 * 360;
 			float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
-			//if flip(0.7) 
-			//{
+			if flip(0.7) 
+			{
 				create burgeon number: 1 {
 					self.level 	<- myself.level + 2.1;
 					self.base 	<- myself.end;
@@ -217,11 +223,11 @@ species stem parent: plant_part
 					self.beta 	<- branch1_beta;
 					self.parent <- myself;
 				}
-			
-			//}		
+			}	
+				
 		} 
 		
-		
+		 
 
 		create stem number: 1 {
 			self.level 			<- myself.level + 0.3;
