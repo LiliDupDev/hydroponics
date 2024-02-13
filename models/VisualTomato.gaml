@@ -14,11 +14,12 @@ global
 	float 	height 		<- shape.height;
 	point 	main_pos 	<- {width / 2, height / 2};
 	float 	length_max 	<- 75.0;//100.0;
-	float 	width_ini 	<- 0.5; // 1.0
-	float 	max_width_stem		<- 2.0;
+	float 	width_ini 	<- 0.25; // 1.0
+	float 	max_width_stem		<- 1.5;
 	float 	max_width_branch	<- 1.5;
-	float 	max_branch_length	<- 5.0;
-	float 	level_step 	<- 0.8; // 0.8
+	float 	max_branch_length	<- 3.0;
+	float 	max_stem_length		<- 7.0;
+	float 	level_step 	<- 0.7; // 0.8
 	float 	env_size 	<- 0.5 * length_max / (1 - level_step);
 	
 	
@@ -164,7 +165,7 @@ species stem parent: plant_part
 			
 			// Este código es crecimiento 
 			float level_correction <- 1.8 * 0.3 ^ level;
-			length 		<- level_correction * (length_max * (1 - min([1, exp(-energy / 1000)])));
+			length 		<- length > max_stem_length ? length : level_correction * (length_max * (1 - min([1, exp(-energy / 1000)])));
 			width 		<- width > max_width_stem ? width :length / level_correction / 13.0;
 			end 		<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};	
 			base 		<- end - {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
@@ -217,11 +218,25 @@ species stem parent: plant_part
 			{
 				create burgeon number: 1 {
 					self.level 	<- myself.level + 2.1;
-					self.base 	<- myself.end;
-					self.end	<- myself.end;
+					point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.base.z + myself.length)};
+					self.base 	<- p_location;//myself.end;
+					self.end	<- p_location;//myself.end;
 					self.alpha 	<- branch1_alpha;
 					self.beta 	<- branch1_beta;
 					self.parent <- myself;
+					
+					/* 
+					save data:[   	cycle
+								,	name
+								, 	parent.name
+								,	base.x
+								,	base.y
+								,	base.z
+								,	end.x
+								,	end.y
+								,	end.z
+					] to:"stem_growth.csv" type:csv rewrite:false;
+					*/
 				}
 			}	
 				
@@ -296,8 +311,10 @@ species leaf
 			
 			create burgeon number: 1 {
 				self.level 	<- myself.parent.level + 1;
-				self.base 	<- myself.base;
-				self.end 	<- self.base;
+				point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+				
+				self.base 	<- ini_location;//myself.base;
+				self.end 	<- ini_location;//self.base;
 				self.alpha 	<- branch1_alpha;
 				self.beta 	<- branch1_beta;
 				self.parent <- myself.parent;
@@ -305,37 +322,47 @@ species leaf
 	
 			create burgeon number: 1 {
 				self.level 	<- myself.parent.level + 1.2;
-				self.base 	<- myself.base;
-				self.end 	<- self.base;
+				
+				point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+				
+				self.base 	<- ini_location;//myself.base; 
+				self.end 	<- ini_location;//self.base;   
 				self.alpha 	<- branch2_alpha;
 				self.beta 	<- branch2_beta;
 				self.parent <- myself.parent;
 			}
-	
+			
 			if flip(0.6) {
 				create burgeon number: 1 {
 					self.level 	<- myself.parent.level + 1.7;
-					self.base 	<- myself.base;
-					self.end 	<- self.base;
+					
+					point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+					
+					self.base 	<- ini_location;//myself.base; 
+					self.end 	<- ini_location;//self.base;   
 					self.alpha 	<- branch3_alpha;
 					self.beta 	<- branch3_beta;
 					self.parent <- myself.parent;
 				}
 	
 			}
-	
+			
+			
 			if flip(0.3) {
 				create burgeon number: 1 {
 					self.level 	<- myself.parent.level + 2;
-					self.base 	<- myself.base;
-					self.end 	<- self.base;
+					point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+					
+					self.base 	<- ini_location;//myself.base; 
+					self.end 	<- ini_location;//self.base;  
 					self.alpha 	<- branch4_alpha;
 					self.beta 	<- branch4_beta;
 					self.parent <- myself.parent;
 				}
 	
 			}
-	
+			
+			/* 
 			if flip(0.8) {
 				create burgeon number: 1 {
 					self.level 	<- myself.parent.level + 3.5;
@@ -347,9 +374,10 @@ species leaf
 				}
 	
 			}
-	
-			/*
-			if flip(0.9) {
+			*/
+			
+			
+			if flip(0.3) {
 				create fruit number: (1 + rnd(2)) {
 					self.base 	<- myself.base;
 					self.end 	<- myself.base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
@@ -361,7 +389,7 @@ species leaf
 				//write "fruit created";
 			 
 			}
-			*/
+			
 			
 			self.parent.children <- self.parent.children - self;		
 		}
