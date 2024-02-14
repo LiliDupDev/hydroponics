@@ -45,7 +45,6 @@ global
 species plant_part
 {
 	plant_part 	parent		<- nil;
-	point 		vector 		<- {0, 0, 0};
 	point 		base 		<- {0, 0, 0};
 	point 		end 		<- {0, 0, 0};
 	float 		alpha 		<- 0.0;
@@ -259,8 +258,6 @@ species stem parent: plant_part
 }
 
 
-
-
 species leaf
 {
 	int   creation_cycle<- -1;
@@ -408,11 +405,15 @@ species fruit
 	point 	end;
 	float 	alpha;
 	float 	beta;
+	float 	size;
+	int		maturation_time <- 42;
+	int		age 			<- 0;
+	float 	age_ratio		<- 0.0;
 	
 	aspect default {
 		draw line([base, end], 0.1) color: #khaki;
 		//draw circle(1 * sin(180 * 0.3)) at: end color: #pink border: #pink;
-		draw sphere(1) at:end color: #pink;
+		draw sphere(size) at:end color:rgb(age_ratio*255, (1-age_ratio)*255, 0);//color: #pink;
 		
 		/* 
 		if (season.current_season = "spring") {
@@ -426,9 +427,13 @@ species fruit
 	}	
 	
 	reflex update {
-		base	<- parent.end;
-		end 	<- base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
-		// TODO: Add size variable, change sphere for var size and update size variable for growing fruit
+		base		<- parent.end;
+		end 		<- base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
+		age_ratio	<- age/maturation_time;
+		
+		size 	<- sin(90 * age_ratio);
+		
+		age <- age + 1;
 		
 		/* 
 		if (season.current_season = "spring") {
