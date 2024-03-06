@@ -59,7 +59,7 @@ global
 		}
 	}
 	
-	reflex stop when:cycle=8760
+	reflex stop when:cycle=2400 // 100 days
 	{
 		do pause;
 	}
@@ -419,6 +419,7 @@ species tomato_plant
 		}
 	}
 	
+	
 	action fast_cycle(float temp, float co2, float ppfd)
 	{
 		// We don´t have an equivalent to GHOUSE, we gave the parameters
@@ -480,6 +481,12 @@ species tomato_plant
 				    , GPF   	    
 				    , MAINTF  
 		] to:"output/ACCUM_F.csv" type:csv rewrite:false;
+	}
+	
+	// Computing Minhas water-yield model
+	action minhas_model(float ET_ai,float ET_cki)
+	{
+		
 	}
 	
 	
