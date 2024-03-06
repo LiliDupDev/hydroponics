@@ -22,6 +22,8 @@ global
 	float 	level_step 	<- 0.7; // 0.8
 	float 	env_size 	<- 0.5 * length_max / (1 - level_step);
 	
+	image_file f_leaf <- image_file("../includes/img/leaf.png");
+	
 	
 	int 	max_level 	<- 7;//8;
 	float 	min_energy 	<- 100.0;//300.0
@@ -269,19 +271,23 @@ species leaf
 	point 		base;
 	point 		end;
 	
-	float size <- 3.0;
+	float size 		<- 0.5;
+	float max_size 	<- 3.0;
+	
 	pair<float, point> rota <- rotation_composition(float(rnd(180))::{1, 0, 0}, float(rnd(180))::{0, 1, 0}, float(rnd(180))::{0, 0, 1});
 	
 	
 	aspect default {
-		draw line([base, end], min([parent.width, 1])) color: #lime;
-		draw triangle(size) rotate: rota at: end color: #lime;
+		draw line([base, end], min([parent.width, 1])) color: #green;
+		//draw triangle(size) rotate: rota at: end color: #lime;
+		draw f_leaf size: size rotate: rota at: end ;
 	}
 	
 	
 	reflex update {
 		base 	<- parent.end;
 		end 	<- base + {5 * cos(beta) * cos(alpha), 5 * cos(beta) * sin(alpha), 5 * sin(beta)};
+		size	<- size < max_size ? size : size+0.3 ;
 		// TODO: Change variable size for growing leaves
 	}
 	
@@ -410,20 +416,10 @@ species fruit
 	int		age 			<- 0;
 	float 	age_ratio		<- 0.0;
 	
+	
 	aspect default {
 		draw line([base, end], 0.1) color: #khaki;
-		//draw circle(1 * sin(180 * 0.3)) at: end color: #pink border: #pink;
 		draw sphere(size) at:end color:rgb(age_ratio*255, (1-age_ratio)*255, 0);//color: #pink;
-		
-		/* 
-		if (season.current_season = "spring") {
-			draw line([base, end], 0.1) color: season.leaf_color;
-			draw circle(1 * sin(180 * season.current_day / season.season_duration)) at: end color: #pink border: #pink;
-		} else if (season.current_season = "summer") {
-			draw line([base, end], 0.1) color: season.leaf_color;
-			draw sphere(1 * sin(90 * season.current_day / season.season_duration)) at: end color: season.fruit_color border: season.fruit_color;
-		}
-		*/
 	}	
 	
 	reflex update {
@@ -434,17 +430,6 @@ species fruit
 		size 	<- sin(90 * age_ratio);
 		
 		age <- age + 1;
-		
-		/* 
-		if (season.current_season = "spring") {
-			end <- base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
-		} else if (season.current_season = "summer") {
-			float beta2 <- -90 + (beta + 90) * exp(-season.current_day / 100);
-			end <- base + {3 * cos(beta2) * cos(alpha), 3 * cos(beta2) * sin(alpha), 3 * sin(beta2)};
-		}
-		*/
-		
-
 	}
 		
 }

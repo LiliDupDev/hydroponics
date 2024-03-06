@@ -133,8 +133,8 @@ species tomato_plant
 	int   INTOUT		<- 7		;			// lntervaI for output
 	float TRGH			<- 1.0		;			// Transmissivity of the greenhouse cover
 	float PLM2			<- 3.0		;			// Plant density // 3.0
-	float PLSTNI		<- 6.0;//6.0		;			// Initial plastochron index
-	float LVSNI			<- 6.0;//1.0		;			// Initial number of leaves per plant
+	float PLSTNI		<- 6.0;//6.0		;	// Initial plastochron index
+	float LVSNI			<- 6.0;//1.0		;	// Initial number of leaves per plant
 	float WLVSI			<- 0.005		;		// Initial weight of leaves
 	float LFARI			<- 0.002	;			// Initial leaf area per plant
 	float QE			<- 0.056	;	
@@ -144,7 +144,7 @@ species tomato_plant
 		                        
 	
 	/* ******************************  GENERAL  ******************************** */
-	float PLTM2V		<- 5.0;//22.0		;
+	float PLTM2V		<- 5.0;//22.0		;   // Plant density in Gainesville experiment 1985
 	// Setting variable accumulates through a day
 	int   TIME			<- 0	;				// Days
 	float GP 		    <- 0.0 	;				// Gross photosynthesis
@@ -362,7 +362,7 @@ species tomato_plant
 		GP 	   <- 34.0;
 		MAINT  <- 0.005;
 		
-		
+		do save_var("TOTWST",0,TOTWST);
 		do save_var("ASTOTL",0,ASTOTL);
 		do save_var("XLAI",0,XLAI);
 		do save_array("LFAR",0);
@@ -372,6 +372,9 @@ species tomato_plant
 		do save_array("RCLFA",0);
 		do save_array("RCWLV",0);
 		do save_array("WLVS",0);
+		do save_array("STMS",0);
+		do save_array("WSTM",0);
+		do save_array("WFRT",0);
 	}
 	
 	
@@ -852,6 +855,13 @@ species tomato_plant
 		}
 		LVSN[0] <- (RCNL-PUSHL*LVSN[0]*DELT)+LVSN[0]-DENLR[0]*DELT;
 		
+		
+	
+		STMS[0] <- STMS[0]+(RCST-PUSHL*STMS[0])*DELT;
+		WLVS[0] <- (RCNL*WPLI-PUSHL*WLVS[0]+RCWLV[0])*DELT+WLVS[0]-DEWLR[0]*DELT;
+		WSTM[0] <- WSTM[0]+(RCST*WPLI*FRSTEM[0]-PUSHL*WSTM[0]+RCWST[0])*DELT;
+		FRPT	<- 1+FRPET[0];
+		
 		do save_array("STMS",1);
 		do save_array("LVSN",1);
 		do save_array("WLVS",1);
@@ -859,12 +869,11 @@ species tomato_plant
 		do save_array("DEWLR",1);
 		do save_array("RCWLV",1);
 		do save_array("DELAR",1);
-	
-		STMS[0] <- STMS[0]+(RCST-PUSHL*STMS[0])*DELT;
-		WLVS[0] <- (RCNL*WPLI-PUSHL*WLVS[0]+RCWLV[0])*DELT+WLVS[0]-DEWLR[0]*DELT;
-		WSTM[0] <- WSTM[0]+(RCST*WPLI*FRSTEM[0]-PUSHL*WSTM[0]+RCWST[0])*DELT;
-		FRPT	<- 1+FRPET[0];
+		
+		do save_array("WSTM",1);
 		do save_var("FRPT",1,FRPT);
+		
+		
 		LFAR[0] <- (RCNL*WPLI*ESLA*ASLA[0]/FRPT-PUSHL*LFAR[0]+RCLFA[0])*DELT+LFAR[0]-DELAR[0]*DELT;
 		
 		do save_array("LFAR",1);
@@ -907,6 +916,10 @@ species tomato_plant
 			TOTWST	<- TOTWST+WSTM[i];
 		}		
 		
+		do save_var("TOTWST",1,TOTWST);
+		do save_var("TOTWML",1,TOTWML);
+		do save_var("TOTNST",1,TOTNST);
+		do save_var("TOTNLV",1,TOTNLV);
 		do save_var("XLAI",1,XLAI);
 		
 		XSLA <- XLAI * (TWTLAI + EPS)*10000.0;
@@ -919,6 +932,9 @@ species tomato_plant
 			TOTWMF 	<- TOTWMF+WFRT[i];
 			TOTNF 	<- TOTNF+FRTN[i];
 		}
+		
+		do save_var("TOTNF",1,TOTNF);
+		do save_var("TOTWMF",1,TOTWMF);
 		
 		
 		WTOTF 	<-  TOTWMF - WFRT[n_F-1];
@@ -933,6 +949,7 @@ species tomato_plant
 		ASTOTL 	<- XLAI   - LFAR[n_L-1];
 		do save_var("ASTOTL",1,ASTOTL);
 		TOTST 	<- TOTNST - STMS[n_L-1];
+		do save_var("TOTST",1,TOTST);
 		WSTOTS 	<- TOTWST - WSTM[n_L-1];	
 		TOTDW 	<- TOTWMF + TOTWML + TOTWST;
 		TOTVW	<- TOTWML + TOTWST;
