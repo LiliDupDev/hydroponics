@@ -271,7 +271,7 @@ species leaf
 	point 		base;
 	point 		end;
 	
-	float size 		<- 0.5;
+	float size 		<- 3.0;//0.5;
 	float max_size 	<- 3.0;
 	
 	pair<float, point> rota <- rotation_composition(float(rnd(180))::{1, 0, 0}, float(rnd(180))::{0, 1, 0}, float(rnd(180))::{0, 0, 1});
@@ -287,7 +287,7 @@ species leaf
 	reflex update {
 		base 	<- parent.end;
 		end 	<- base + {5 * cos(beta) * cos(alpha), 5 * cos(beta) * sin(alpha), 5 * sin(beta)};
-		size	<- size < max_size ? size : size+0.3 ;
+		//size	<- size < max_size ? size : size+0.3 ;
 		// TODO: Change variable size for growing leaves
 	}
 	
