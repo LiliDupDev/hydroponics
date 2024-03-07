@@ -22,6 +22,7 @@ global
 	map<string,int>    	stage_duration 		<- ["stageI"::20,"stageII"::40,"stageIII"::60]; 			// the integers represent the number of days in that stage
 	list<string>		stages				<- ["stageI","stageII","stageIII"];
 	int					STAGE				;
+	map<string,float>	yield_water_by_stage<- ["stageI"::0.0,"stageII"::0.0,"stageIII"::0.0];
 	
 	// TABLES
 	list<float> BOX 	<-[10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0];

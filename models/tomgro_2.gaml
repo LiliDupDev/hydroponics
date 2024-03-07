@@ -14,7 +14,7 @@ import "constants.gaml"
 global
 {
 	
-	bool 			export 		<- true;
+	bool export 		<- true;
 	
 	
 	
@@ -30,14 +30,17 @@ global
 	
 	reflex daily when:every(24#hours)
 	{
+		int day <- cycle/24;
+		float ET_ai  <- et_a[{1,day}];
+		float ET_cki <- et_ck[{1,day}];
 		ask tomato_plant
 		{
-			do main_cycle;
+			do main_cycle(ET_ai, ET_cki);
 		}
 		
 		// TODO: Variables to use in Minhas model
 		/* 
-		int day <- cycle/24;
+		
 		query et_ai --> et_a[{1,day}]
 		query et_ai --> et_ck[{1,day}]
 		*/
@@ -59,8 +62,14 @@ global
 		}
 	}
 	
-	reflex stop when:cycle=2400 // 100 days
+	reflex stop when:cycle=1920 // 80 days
 	{
+		int day <- cycle/24;
+		float ET_cki <- et_ck[{1,day}];
+		ask tomato_plant
+		{
+			do minhas_computation(ET_cki);
+		}
 		do pause;
 	}
 	
@@ -222,9 +231,8 @@ species tomato_plant
 	float 		FWPFI	<- 0.0;						// Initial weight per initiated fruit			
 	float		FRESHCONV		<- 0.06;			// Fresh weight conversion factor. The dry weight divided by this quantity results in the fresh weight.
 	float		alpha_Minhas 	<- 0.0;				// Sensitivity coefficient Minhas model
-	
-	
-	
+	map<string,float>	yield_water_stage; 			// Save the value by each stage
+	float		ET_a_acc	<-	0.0	;				// This variable accumulates the daily measure of ET_a to compute an average at the end of the stage
 	
 	/* *******************************  STEM  ******************************* */ 
 	// rates
@@ -302,8 +310,10 @@ species tomato_plant
 		APFFW	<- 0.0;
 		ATT		<- WLVS[0]+LVSN[0];
 		TIME 	<- int(cycle / 24);
+		
+		yield_water_stage	<- copy(yield_water_by_stage);
 		STAGE	<- 0;
-		alpha_Minhas	<- stage_sensitivity[stages[STAGE]];
+		alpha_Minhas<- stage_sensitivity[stages[STAGE]];
 		
 		
 		
@@ -369,21 +379,22 @@ species tomato_plant
 	}
 	
 	
-	action main_cycle
+	action main_cycle(float ET_a, float ET_ck)
 	{
 		TIME <- int(cycle / 24);
 		write "Main ----------------------> Day: "+TIME+" Cycle: "+cycle;
 
 		
-		if (TIME > stage_duration[stages[STAGE]]) and (STAGE < length(stages)-1) // This condition controls the duration of the stage
-		{
-			STAGE <- STAGE+1;
-		}
+		//if (TIME > stage_duration[stages[STAGE]]) and (STAGE < length(stages)-1) // This condition controls the duration of the stage
+		//{
+		//	STAGE <- STAGE+1;
+		//}
+		
+		do accumulate_minhas_model(ET_a, ET_ck);
 		
 		alpha_Minhas	<- stage_sensitivity[stages[STAGE]];
 		
-		do save_var("STAGE",1,STAGE);
-		do save_var("alpha_Minhas",1,alpha_Minhas);
+
 		
 		
 		float PAR <- 20.1;
@@ -484,9 +495,77 @@ species tomato_plant
 	}
 	
 	// Computing Minhas water-yield model
-	action minhas_model(float ET_ai,float ET_cki)
+	action accumulate_minhas_model(float ET_ai,float ET_cki)
 	{
+		if (TIME > stage_duration[stages[STAGE]]) and (STAGE < length(stages)-1)
+		{
+			float avg_ET_a <- ET_a_acc/stage_duration[stages[STAGE]];  // Average for grow stage
+			
+			// Computing yield water for this stage
+			float ratio 		<- avg_ET_a/ET_cki;
+			float yield_water 	<- (1-ratio)^2;
+			float yield_water_s <- (1-yield_water)^alpha_Minhas;
+			
+			yield_water_stage[stages[STAGE]] <- yield_water_s;
+			
+			save data:[ cycle
+					,	0
+					,	ET_a_acc
+					,	stages[STAGE]
+					, 	stage_duration[stages[STAGE]]
+					,	avg_ET_a
+					, 	ratio
+					,	yield_water
+					,	yield_water_s
+					,	yield_water_stage[stages[0]]
+					,	yield_water_stage[stages[1]]
+					,	yield_water_stage[stages[2]]
+			] to:"STAGE_COMP.csv" type:csv rewrite:false;
+			
+			STAGE 	 <- STAGE+1;
+			ET_a_acc <- 0.0;
+			
+		}
+		else
+		{
+			// Accumulate
+			ET_a_acc <- ET_a_acc+ET_ai;
+			do save_var("ET_a_acc",1,ET_a_acc);
+		}
 		
+	}
+	
+	
+	// Minhas computation
+	action minhas_computation(float ET_cki)
+	{
+		int days_on_stage	<- TIME-stage_duration[stages[STAGE-1]];
+		float avg_ET_a <- ET_a_acc/days_on_stage;  // Average for grow stage
+			
+		// Computing yield water for this stage
+		float ratio 		<- avg_ET_a/ET_cki;
+		float yield_water 	<- (1-ratio)^2;
+		float yield_water_s <- (1-yield_water)^alpha_Minhas;
+			
+		yield_water_stage[stages[STAGE]] <- yield_water_s;
+			
+		save data:[ 	cycle
+					,	days_on_stage
+					,	ET_a_acc
+					,	stages[STAGE]
+					, 	stage_duration[stages[STAGE]]
+					,	avg_ET_a
+					, 	ratio
+					,	yield_water
+					,	yield_water_s
+					,	yield_water_stage[stages[0]]
+					,	yield_water_stage[stages[1]]
+					,	yield_water_stage[stages[2]]
+		] to:"STAGE_COMP.csv" type:csv rewrite:false;
+		
+		
+		// Computing Minhas model definitive:
+		// TODO: Add loop to compute the product 
 	}
 	
 	
