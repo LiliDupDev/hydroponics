@@ -14,7 +14,7 @@ global
 	matrix<float> 	day_changes <- matrix(csv_file("../includes/day_changes.csv", true)) ;
 	
 	// VECTORS FOR EVAPOTRANSPIRATION
-	matrix<float> 	et_a	<- matrix(csv_file("../includes/et_ai.csv", true));		// Actual evapotranspiration for Minhas model 
+	matrix<float> 	et_a	<- matrix(csv_file("../includes/et_ai-alto.csv", true));		// Actual evapotranspiration for Minhas model 
 	matrix<float> 	et_ck	<- matrix(csv_file("../includes/et_cki.csv", true));	// Optimal evapotranspiration for Minhas model 
 	
 	// GROWING STAGES
@@ -80,7 +80,7 @@ global
 	float RMRF	        <- 0.01		;			// Maintenance requirements of fruits
 	float FTRUSN		<- 6.0		;			// Node number on the plant that bears the first truss	
 	float WPLI			<- 0.0001	;			// Initial weight per initiated leaf
-	float WPFI			<- 0.0001	;			// Initial weight per initiated fruit
+	float WPFI			<- 0.001	;			// Initial weight per initiated fruit
 	float SLAMX			<- 0.075	;			// Maximum value of SLA per leaf age class
 	float SLAMN			<- 0.024	;			// Minimum value of SLA per leaf age class
 	float STDSLA		<- 0.075	;			// Standard' value of SLA at 24 C, 350 J..lmol mol-1 C02. and low PAR
@@ -95,7 +95,7 @@ global
 	float TU1			<- 2.2		;			// Auxiliary variable used for adaptation of Gainesville TAU1 to conditions in Israel
 	float TU2			<- 3.5		;			// Auxiliary variable used for adaptation of Gainesville TAU2 to conditions in Israel
 	int   NSTART		<- 282		;			// Starting day (number of Julian calendar day)
-	int   NDAYS			<- 230		;			// Number of days to be simulated
+	int   NDAYS			<- 80		;			// Number of days to be simulated
 	int   DELT			<- 1		;			// Time step of simulation within the main loop
 	int   NFAST			<- 24		;			// Number of time steps within the fast loop during one day
 	int   INTOUT		<- 7		;			// lntervaI for output
@@ -103,7 +103,7 @@ global
 	float PLM2			<- 3.0		;			// Plant density // 3.0
 	float PLSTNI		<- 6.0;//6.0		;	// Initial plastochron index
 	float LVSNI			<- 6.0;//1.0		;	// Initial number of leaves per plant
-	float WLVSI			<- 0.005		;		// Initial weight of leaves
+	float WLVSI			<- 0.005	;			// Initial weight of leaves
 	float LFARI			<- 0.002	;			// Initial leaf area per plant
 	float QE			<- 0.056	;	
 	float XK			<- 0.58		;

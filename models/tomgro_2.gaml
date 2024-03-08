@@ -33,6 +33,7 @@ global
 		int day <- cycle/24;
 		float ET_ai  <- et_a[{1,day}];
 		float ET_cki <- et_ck[{1,day}];
+		
 		ask tomato_plant
 		{
 			do main_cycle(ET_ai, ET_cki);
@@ -222,17 +223,19 @@ species tomato_plant
 	
 	
 	// Fresh weight variables
-	list<float> FWFRT	;							// Fresh weigth per age class
-	list<float> FAVWF	;							// Average fresh weight per fruit in fruit class
-	list<float>	FAVFM	;							// Average fresh weight per mature fruit
-	list<float> FAVWMF	;							// Average fresh weight per fruit in fruit class NF			
-	float		FWTOTF	<- 0.0;						// Total fresh weight of growing fruits			
-	float 		FTOTWMF	<- 0.0;						// Total dry weight of fruits in the field			
-	float 		FWPFI	<- 0.0;						// Initial weight per initiated fruit			
-	float		FRESHCONV		<- 0.06;			// Fresh weight conversion factor. The dry weight divided by this quantity results in the fresh weight.
-	float		alpha_Minhas 	<- 0.0;				// Sensitivity coefficient Minhas model
-	map<string,float>	yield_water_stage; 			// Save the value by each stage
-	float		ET_a_acc	<-	0.0	;				// This variable accumulates the daily measure of ET_a to compute an average at the end of the stage
+	list<float> 		FWFRT	;				    // Fresh weigth per age class
+	list<float> 		FAVWF	;				    // Average fresh weight per fruit in fruit class
+	list<float>			FAVFM	;				    // Average fresh weight per mature fruit
+	list<float> 		FAVWMF	;				    // Average fresh weight per fruit in fruit class NF			
+	float				FWTOTF		<- 0.0 ;	    // Total fresh weight of growing fruits			
+	float 				FTOTWMF		<- 0.0 ;	    // Total fresh weight of fruits in the field			
+	float 				FWPFI		<- 0.0 ;	    // Initial weight per initiated fruit			
+	float				FRESHCONV	<- 0.06;	    // Fresh weight conversion factor. The dry weight divided by this quantity results in the fresh weight.
+	float				alpha_Minhas<- 0.0 ;	    // Sensitivity coefficient Minhas model
+	map<string,float>	yield_water_stage; 		    // Save the value by each stage
+	float				ET_a_acc	<-	0.0	;	    // This variable accumulates the daily measure of ET_a to compute an average at the end of the stage
+	float 				YIELD_WATER	<-  1.0 ;	    // Yield Water proportion
+	float				FWHVST		<-  0.0	;		// Harvest fresh weight
 	
 	/* *******************************  STEM  ******************************* */ 
 	// rates
@@ -566,6 +569,11 @@ species tomato_plant
 		
 		// Computing Minhas model definitive:
 		// TODO: Add loop to compute the product 
+		loop val over:yield_water_stage{
+			YIELD_WATER <- YIELD_WATER * val;
+		} 
+		
+		do save_var("YIELD_WATER",1,YIELD_WATER);
 	}
 	
 	
@@ -1033,7 +1041,11 @@ species tomato_plant
 		DMCF84 	<- TABEX(DMC84T,XDMC,TIME,6);
 		DMCF84  <- DMCF84=0?EPS:DMCF84;
 		FWFR10 	<- FWFR10+(PUSHM*WFRT[n_F-2]*DELT)*100.0/DMCF84;
+		// Aqui calcular peso fresco de lo que se recolecta
+		FWHVST	<- FWHVST+(PUSHM*WFRT[n_F-2]*DELT);
 		APFFW	<- ((PUSHM*(max([WFRT[n_F-2],0.0]))*DELT)*100.0/DMCF84) / ((PUSHM * FRTN[n_F-2] * DELT)+EPS);
+		do save_var("FWFR10",1,FWFR10);
+		do save_var("FWHVST",1,FWHVST);
 	}
 	
 	
