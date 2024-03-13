@@ -14,15 +14,18 @@ global
 	matrix<float> 	day_changes <- matrix(csv_file("../includes/day_changes.csv", true)) ;
 	
 	// VECTORS FOR EVAPOTRANSPIRATION
-	matrix<float> 	et_a	<- matrix(csv_file("../includes/et_ai-alto.csv", true));		// Actual evapotranspiration for Minhas model 
-	matrix<float> 	et_ck	<- matrix(csv_file("../includes/et_cki.csv", true));	// Optimal evapotranspiration for Minhas model 
+	matrix<float> 	daily_irrigation	<- matrix(csv_file("../includes/daily_irrigation.csv", true));		// Actual irrigation to implement Minhas model
+	matrix<float> 	stages_data	<- matrix(csv_file("../includes/stages_file.csv", true));					// Data for Minhas model 
 	
 	// GROWING STAGES
-	map<string,float>   stage_sensitivity 	<- ["stageI"::0.0552,"stageII"::0.6721,"stageIII"::0.8176]; // alphas in Minhas model
-	map<string,int>    	stage_duration 		<- ["stageI"::20,"stageII"::40,"stageIII"::60]; 			// the integers represent the number of days in that stage
-	list<string>		stages				<- ["stageI","stageII","stageIII"];
+	map<string,float>   stage_sensitivity 	;//<- ["stageI"::0.0552,"stageII"::0.6721,"stageIII"::0.8176]; // alphas in Minhas model
+	map<string,float>	optimal_irrigation	;
+	map<string,int>    	stage_duration 		;//<- ["stageI"::20,"stageII"::40,"stageIII"::60]; 			// the integers represent the number of days in that stage
+	list<string>		stages				;//<- ["stageI","stageII","stageIII"];
 	int					STAGE				;
-	map<string,float>	yield_water_by_stage<- ["stageI"::0.0,"stageII"::0.0,"stageIII"::0.0];
+	map<string,float>	yield_water_by_stage;//<- ["stageI"::0.0,"stageII"::0.0,"stageIII"::0.0];
+	
+	
 	
 	// TABLES
 	list<float> BOX 	<-[10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0];

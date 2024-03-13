@@ -24,6 +24,20 @@ global
 		step <- 1#hour;
 		//day_changes 			<- matrix(csv_file("../includes/day_changes.csv", true));
 		
+		
+	//map<string,float>   stage_sensitivity 	;//<- ["stageI"::0.0552,"stageII"::0.6721,"stageIII"::0.8176]; // alphas in Minhas model
+	//map<string,float>	optimal_irrigation	;
+	//map<string,int>    	stage_duration 		;//<- ["stageI"::20,"stageII"::40,"stageIII"::60]; 			// the integers represent the number of days in that stage
+	//list<string>		stages				;//<- ["stageI","stageII","stageIII"];
+	//int					STAGE				;
+	//map<string,float>	yield_water_by_stage;//<- ["stageI"::0.0,"stageII"::0.0,"stageIII"::0.0];
+	
+	
+	loop i from: 1 to: stages_data.rows step:1 {
+		write "row ("+i+") ---> "+stages_data[0,i];
+		}
+	
+		
 		create tomato_plant number:1;
 	}
 	
@@ -31,12 +45,10 @@ global
 	reflex daily when:every(24#hours)
 	{
 		int day <- cycle/24;
-		float ET_ai  <- et_a[{1,day}];
-		float ET_cki <- et_ck[{1,day}];
 		
 		ask tomato_plant
 		{
-			do main_cycle(ET_ai, ET_cki);
+			//do main_cycle(ET_ai, ET_cki);
 		}
 		
 		// TODO: Variables to use in Minhas model
@@ -66,10 +78,9 @@ global
 	reflex stop when:cycle=1920 // 80 days
 	{
 		int day <- cycle/24;
-		float ET_cki <- et_ck[{1,day}];
 		ask tomato_plant
 		{
-			do minhas_computation(ET_cki);
+			//do minhas_computation(ET_cki);
 		}
 		do pause;
 	}
