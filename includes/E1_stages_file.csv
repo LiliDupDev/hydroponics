@@ -1,0 +1,4 @@
+name,start,end,sensitive,lrequired
+Stage1,1,25,0.0552,11.55
+Stage2,26,56,0.6721,28.892
+Stage3,57,110,0.8176,55.173

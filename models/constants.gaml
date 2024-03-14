@@ -14,8 +14,8 @@ global
 	matrix<float> 	day_changes <- matrix(csv_file("../includes/day_changes.csv", true)) ;
 	
 	// VECTORS FOR EVAPOTRANSPIRATION
-	matrix<float> 	daily_irrigation	<- matrix(csv_file("../includes/daily_irrigation.csv", true));		// Actual irrigation to implement Minhas model
-	matrix			stages_data			<- matrix(csv_file("../includes/stages_file.csv", true));					// Data for Minhas model 
+	matrix<float> 	daily_irrigation	<- matrix(csv_file("../includes/E3_daily_irrigation.csv", true));		// Actual irrigation to implement Minhas model
+	matrix			stages_data			<- matrix(csv_file("../includes/E4_stages_file.csv", true));					// Data for Minhas model 
 	
 	// GROWING STAGES
 	map<string,float>   stage_sensitivity 	;//<- ["stageI"::0.0552,"stageII"::0.6721,"stageIII"::0.8176]; // alphas in Minhas model
@@ -78,8 +78,8 @@ global
 	float RMRL	        <- 0.015	;			// Relative maintenance requirements of vegetative material
 	float RMRF	        <- 0.01		;			// Maintenance requirements of fruits
 	float FTRUSN		<- 6.0		;			// Node number on the plant that bears the first truss	
-	float WPLI			<- 0.0001	;			// Initial weight per initiated leaf
-	float WPFI			<- 0.001	;			// Initial weight per initiated fruit
+	float WPLI			<- 0.1		;			// Initial weight per initiated leaf   // In testing the value was 0.0001
+	float WPFI			<- 0.000	;			// Initial weight per initiated fruit
 	float SLAMX			<- 0.075	;			// Maximum value of SLA per leaf age class
 	float SLAMN			<- 0.024	;			// Minimum value of SLA per leaf age class
 	float STDSLA		<- 0.075	;			// Standard' value of SLA at 24 C, 350 J..lmol mol-1 C02. and low PAR
@@ -101,8 +101,8 @@ global
 	float TRGH			<- 1.0		;			// Transmissivity of the greenhouse cover
 	float PLM2			<- 3.0		;			// Plant density // 3.0
 	float PLSTNI		<- 6.0;//6.0		;	// Initial plastochron index
-	float LVSNI			<- 6.0;//1.0		;	// Initial number of leaves per plant
-	float WLVSI			<- 0.005	;			// Initial weight of leaves
+	float LVSNI			<- 5.0;//1.0		;	// Initial number of leaves per plant
+	float WLVSI			<- 0.5		;			// Initial weight of leaves  // For testing purpose the value was 0.005
 	float LFARI			<- 0.002	;			// Initial leaf area per plant
 	float QE			<- 0.056	;	
 	float XK			<- 0.58		;

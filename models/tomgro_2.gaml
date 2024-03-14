@@ -14,15 +14,18 @@ import "constants.gaml"
 global
 {
 	
-	bool export 		<- true;
-	
-	
+	bool	export 		<- true;
+	int		simulation_days	<- 95;
+	int 	simulation_duration ;
+	 	
+	// E1 lasts 110 days
 	
 	
 	init
 	{
 		step <- 1#hour;
 		//day_changes 			<- matrix(csv_file("../includes/day_changes.csv", true));
+		simulation_duration <- simulation_days * 24;
 
 	//map<string,float>	yield_water_by_stage;//<- ["stageI"::0.0,"stageII"::0.0,"stageIII"::0.0];	
 		loop i from: 0 to: stages_data.rows - 1 step:1 {
@@ -46,16 +49,23 @@ global
 	}
 	
 	
+	
+	
 	reflex daily when:every(24#hours)
 	{
 		int day <- cycle/24;
 		
-		float water <- daily_irrigation[{1,day}];
+		float water <- daily_irrigation[{1,day}]/1000;
+		
+		//write "Day: "+day+" -  Water:"+ daily_irrigation[{1,day}];
+		
 		ask tomato_plant
 		{
 			do main_cycle(water);
 		}
 	}
+	
+	
 	
 	reflex hourly
 	{
@@ -72,8 +82,10 @@ global
 			do fast_cycle(temperature, CO2, PAR);//hourly_GROWTH(temperature,CO2,PAR,PPFD);
 		}
 	}
-	
-	reflex stop when:cycle=1920 // 80 days
+
+
+
+	reflex stop when:cycle=simulation_duration // 80 days
 	{
 		int day <- cycle/24;
 		ask tomato_plant
@@ -505,8 +517,6 @@ species tomato_plant
 	// Computing Minhas water-yield model
 	action accumulate_minhas_model(float water)
 	{
-		
-		
 		if (TIME > stage_duration[stages[STAGE]]) and (STAGE < length(stages)-1)
 		{
 			float ratio 		<- 	water_by_stage[stages[STAGE]]/optimal_irrigation[stages[STAGE]]; 
@@ -567,7 +577,6 @@ species tomato_plant
 		loop val over:yield_water_by_stage
 		{
 			YIELD_WATER <- YIELD_WATER * val;
-			do save_var("YIELD_WATER",1,YIELD_WATER);
 		} 
 		
 		do save_var("YIELD_WATER",2,YIELD_WATER);
