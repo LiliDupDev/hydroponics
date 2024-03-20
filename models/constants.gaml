@@ -14,8 +14,8 @@ global
 	matrix<float> 	day_changes <- matrix(csv_file("../includes/day_changes.csv", true)) ;
 	
 	// VECTORS FOR EVAPOTRANSPIRATION
-	matrix<float> 	daily_irrigation	<- matrix(csv_file("../includes/E3_daily_irrigation.csv", true));		// Actual irrigation to implement Minhas model
-	matrix			stages_data			<- matrix(csv_file("../includes/E4_stages_file.csv", true));					// Data for Minhas model 
+	matrix<float> 	daily_irrigation	<- matrix(csv_file("../includes/E1_daily_irrigation.csv", true));		// Actual irrigation to implement Minhas model
+	matrix			stages_data			<- matrix(csv_file("../includes/E1_stages_file.csv", true));					// Data for Minhas model 
 	
 	// GROWING STAGES
 	map<string,float>   stage_sensitivity 	;//<- ["stageI"::0.0552,"stageII"::0.6721,"stageIII"::0.8176]; // alphas in Minhas model
@@ -84,7 +84,7 @@ global
 	float SLAMN			<- 0.024	;			// Minimum value of SLA per leaf age class
 	float STDSLA		<- 0.075	;			// Standard' value of SLA at 24 C, 350 J..lmol mol-1 C02. and low PAR
 	float FRLG			<- 10.0		;			// Lag period between the time that a no (nodes) truss appears and a fruit appears on plant that truss
-	float AVFM			<- 2.5		;			// Average weight per mature fruit	
+	float AVFM			<- 18.0		;			// Average weight per mature fruit	(g)
 	float SCO2			<- 0.00095	;			// Relative increase in development rate as a function of C02 level
 	float THIGH			<- 29.5		;			// Temperature threshold above which fruit set decreases
 	float TLOW			<- 10.0		;			// Temperature threshold below which splitting of trusses occurs and more fruits are initiated per new leaf

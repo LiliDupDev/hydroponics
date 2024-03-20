@@ -14,8 +14,8 @@ import "constants.gaml"
 global
 {
 	
-	bool	export 		<- true;
-	int		simulation_days	<- 95;
+	bool	export 			<- true;
+	int		simulation_days	<- 230;
 	int 	simulation_duration ;
 	 	
 	// E1 lasts 110 days
@@ -1010,6 +1010,7 @@ species tomato_plant
 			TOTNF 	<- TOTNF+FRTN[i];
 		}
 		
+		do save_array("AVWF",1);
 		//do save_var("TOTNF",1,TOTNF);
 		//do save_var("TOTWMF",1,TOTWMF);
 		
@@ -1054,6 +1055,7 @@ species tomato_plant
 		// Aqui calcular peso fresco de lo que se recolecta
 		FWHVST	<- FWHVST+(PUSHM*WFRT[n_F-2]*DELT);
 		APFFW	<- ((PUSHM*(max([WFRT[n_F-2],0.0]))*DELT)*100.0/DMCF84) / ((PUSHM * FRTN[n_F-2] * DELT)+EPS);
+		do save_var("AVWMF",1,AVWMF);
 		do save_var("FWFR10",1,FWFR10);
 		do save_var("FWHVST",1,FWHVST);
 	}
