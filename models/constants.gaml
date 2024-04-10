@@ -26,7 +26,7 @@ global
 	// TABLES
 	list<float> BOX 	<-[10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0];
 	list<float> POL 	<-[0.0007,	0.0016,	0.0031,	0.0032,	0.0032,	0.0032,	0.0032,	0.0032,	0.0032,	0.0];
-	list<float> POF 	<-[0.03, 0.07, 0.13, 0.3, 0.4, 0.4, 0.4, 0.4, 0.4, 0.0]; // Relative potential sink capacity per fruit age class
+	list<float> POF 	<-[0.03, 0.07, 0.13, 0.3, 0.4, 0.4, 0.4, 0.4, 0.4, 0.0]; 			// Relative potential sink capacity per fruit age class
 	list<float> ASLA 	<-[1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0];
 	list<float> FRPET 	<-[0.49, 0.49, 0.49, 0.49, 0.49, 0.49, 0.49, 0.49, 0.49, 0.49];
 	list<float> FRSTEM 	<-[0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43, 0.43];
