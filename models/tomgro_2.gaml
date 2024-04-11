@@ -581,9 +581,10 @@ species tomato_plant
 		
 		do save_var("YIELD_WATER",2,YIELD_WATER);
 		
-		FWHVST <- FWHVST*YIELD_WATER;
+		FWHVST <- (FWHVST/FRESHCONV)*YIELD_WATER;
 		
 		do save_var("FWHVST",2,FWHVST);
+		
 	}
 	
 	
