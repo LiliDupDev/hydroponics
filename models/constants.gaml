@@ -68,7 +68,7 @@ global
 	float CO2M	        <- 0.21		;			// Factor to calculate effect of C02 On specific leaf area		
 	float TPL	        <- 0.33		;			// Number of trusses per leaf after initiation of first truss
 	float EPS	        <- 10^(-12)	;	 		// Auxiliary variable, very small number (10E-12), to avoid zero division
-	float GREF	        <- 1.0;//0.7		;			// Growth efficiency, accounting for growth respiration
+	float GREF	        <- 1.0;//0.7		;	// Growth efficiency, accounting for growth respiration
 	float SPTEL	        <- 1.0		;			// Auxiliary value for adaptation of units
 	float GENFAC		<- 0.65		;			// Factor accounting for the effect of supply/demand ratio on initiation of new nodes	
 	float XLAIM			<- 3.0		;			// LAI above which death of leaves due to shading starts

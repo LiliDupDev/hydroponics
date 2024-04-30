@@ -319,7 +319,7 @@ species tomato_plant
 		LVSN[0]	<- LVSNI*PLM2;
 		//LVSN[1] <- LVSNI*PLM2;
 		BTOTNLV	<- LVSNI*PLM2;
-		STMS[0]	<- 1;
+		STMS[0]	<- 4; // Representan los nudos
 		WLVS[0]	<- WLVSI*PLM2;
 		LFAR[0]	<- LFARI*PLM2;
 		XLAI	<- LFAR[0];
@@ -622,7 +622,7 @@ species tomato_plant
 		RDVLVF	<- age_leaf*SPTEL*FCO2;								// Compute leaf aging
 		//do save_var("RDVLVF",1,RDVLVF);
 		
-		RDVFRF	<- TABEX(RDVFRT,XFRT,TMPA,9)*SPTEL*FCO2;							// Compute fruit aging
+		RDVFRF	<- TABEX(RDVFRT,XFRT,TMPA,9)*SPTEL*FCO2;			// Compute fruit aging
 
 		// Compute instantaneous eefect of temperature fruit set
 		TTHF <- 0.0 ;
@@ -715,21 +715,12 @@ species tomato_plant
 		ESLA <- min([SLAMX,ESLA]);
 		//do save_var("ESLA",3,ESLA);
 		
-		//write "ESLA: "+ESLA;
+		// COMPUTE TOTAL DRY WEIGHT GROWTH
 		float TRCDRW <- (GP/PLTM2V-MAINT)*GREF;
 		TRCDRW <- max([TRCDRW,0.0]);
 		
-		//do save_var("GP",1,GP);
-		//do save_var("GREF",1,GREF);
-		//do save_var("MAINT",1,MAINT);
-		//do save_var("PLTM2V",1,PLTM2V);
-		//do save_var("TRCDRW",1,TRCDRW);
-		
 		float T_trcdrm <- TABEX(PROOT,XROOT,PLSTN,6); 
 		RCDRW  <- TRCDRW*(1.0-T_trcdrm)*min([max([EPS,CLSDML])/ZBENG,1.0])*TEMFAC; 
-		//do save_var("T_trcdrm",1,T_trcdrm);
-		//do save_var("PLSTN",2,PLSTN);
-		//do save_var("RCDRW",1,RCDRW);
 
 		PTNLVS <- 0.0 ;
 		PTNSTM <- 0.0 ;
@@ -907,9 +898,15 @@ species tomato_plant
 	// Technically implying integration of each state variable of each age class of each state variable
 	action INGRAT
 	{
+		
+		//ALLOW FOR CARBOHYDRATE POOL, CPOOL, ALTHOUGH NOW IS 0.0
 		float XBOX <- 0.0;
 		CPOOL <- CPOOL+(GP-RCDRW/GREF-MAINT)*DELT;
+		
+		// INTEGRATE PLANT DEVELOPMENT (PLASTOCHRONS)
 		PLSTN <- PLSTN+GENR*DELT;
+		
+		// INTEGRATE LEAF PROCESSES
 		LVSN[n_L-1] <- LVSN[n_L-1] +(PUSHL*LVSN[n_L-2]) - DENLR[n_L-1]*DELT;
 		WLVS[n_L-1] <- WLVS[n_L-1] +(PUSHL*WLVS[n_L-2]) - DEWLR[n_L-1]*DELT;
 		LFAR[n_L-1] <- LFAR[n_L-1] +(PUSHL*LFAR[n_L-2]) - DELAR[n_L-1]*DELT;
@@ -951,6 +948,7 @@ species tomato_plant
 		
 		//do save_array("LFAR",1);
 		
+		// INTEGRATE FRUIT
 		FRTN[n_F-1] <- FRTN[n_F-1]+(PUSHM*FRTN[n_F-2]-DENFR[n_F-1])*DELT;	
 		WFRT[n_F-1] <- WFRT[n_F-1]+(PUSHM*WFRT[n_F-2]-DEWFR[n_F-1])*DELT;
 		
@@ -972,6 +970,8 @@ species tomato_plant
 		do save_array("WFRT",1);
 		do save_array("FWFRT",1);
 		
+		
+		// COMPUTE XLAI, TOTAL PLANT WTS. ETC ...
 		XLAI	<- 0.0;
 		TWTLAI	<- 0.0;
 		TOTNLV	<- 0.0;
@@ -982,14 +982,27 @@ species tomato_plant
 		
 		loop i from:0 to:n_L-1 step:1
 		{
+			// COMPUTE AVG LEAF WEIGHT
 			AVWL[i] <- WLVS[i]/(LVSN[i]+EPS);
+			
+			// COMPUTE XLAI
 			XLAI	<- XLAI+LFAR[i];
+			
+			// COMPUTE TOTAL NO. OF LEAVES
 			TOTNLV	<- TOTNLV+LVSN[i];
+			
+			// COMPUTE TOTAL WT. OF LEAVES, G/M2
 			TOTWML	<- TOTWML+WLVS[i];
 			ATL		<- ATL+DEWLR[i]*DELT;
+			
+			// COMPUTE WT. OF LEAF BLADES ONLY (EXCLUDING PETIOLE)
 			XBOX 	<- i*100.0/n_L;
+			
+			// ACCOUNT FOR PETIOLE GROWTH WITH EACH INCREMENT OF LAI GROWTH
 			FRPT 	<- TABEX(FRPET,BOX,XBOX,10);
 			TWTLAI 	<- TWTLAI + WLVS[0]/(1.0+FRPT);
+			
+			// COMPUTE TOTAL NO., WT OF STEMS
 			TOTNST	<- TOTNST+STMS[i];
 			TOTWST	<- TOTWST+WSTM[i];
 		}		
@@ -1000,14 +1013,20 @@ species tomato_plant
 		//do save_var("TOTNLV",1,TOTNLV);
 		//do save_var("XLAI",1,XLAI);
 		
+		// COMPUTE AVG SLA OF CANOPY, CM**2/G
 		XSLA <- XLAI * (TWTLAI + EPS)*10000.0;
 		TOTWMF <- 0.0 ;
 		TOTNF  <- 0.0 ;
 		
 		loop i from:0 to:n_F-1 step:1
 		{
+			// COMPUTE AVG FRUIT WT, G/FRUIT
 			AVWF[i] <- WFRT[i]/(FRTN[i]+EPS);
+			
+			// COMPUTE TOTAL WEIGHT OF FRUIT, G/M2
 			TOTWMF 	<- TOTWMF+WFRT[i];
+			
+			// COMPUTE TOTAL NO. OF FRUIT, NO./M2
 			TOTNF 	<- TOTNF+FRTN[i];
 		}
 		
@@ -1016,6 +1035,7 @@ species tomato_plant
 		//do save_var("TOTWMF",1,TOTWMF);
 		
 		
+		// NOW COMPUTE FRUIT TOTALS EXCLUDING MATURE(CLASS NF) FRUIT
 		WTOTF 	<-  TOTWMF - WFRT[n_F-1];
 		TOTGF 	<-  TOTNF  - FRTN[n_F-1];
 		
@@ -1027,37 +1047,75 @@ species tomato_plant
 		do save_var("TOTWMF",1,TOTWMF);
 		do save_var("FTOTWMF",1,FTOTWMF);
 		
+		// COMPUTE NO OF LEAVES
 		BTOTNLV	<-  BTOTNLV+ RCNL * DELT;
 		DLN		<- (BTOTNLV-TOTNLV) / PLM2;
+		
+		// NOW COMPUTE LEAF TOTALS EXCLUDING MATURE(CLASS NL) LEAVES
 		TOTGL	<- 0.0;
 		ASTOTL	<- 0.0;
+		
+		// WEIGHT OF STILL GROWING LEAVES
 		WSTOTL 	<- TOTWML - WLVS[n_L-1];
+		
+		// NUMBER OF STILL GROWING LEAVES
 		TOTGL 	<- TOTNLV - LVSN[n_L-1];
+		
+		// AREA OF STILL GROWING LEAVES
 		ASTOTL 	<- XLAI   - LFAR[n_L-1];
+		
 		//do save_var("ASTOTL",1,ASTOTL);
+		// NUMBER OF STILL GROWING STEMS
 		TOTST 	<- TOTNST - STMS[n_L-1];
+		
 		//do save_var("TOTST",1,TOTST);
-		WSTOTS 	<- TOTWST - WSTM[n_L-1];	
+		WSTOTS 	<- TOTWST - WSTM[n_L-1];
+		
+		// NOW COMPUTE PLANT TOTALS ON A M2 BASIS
+		// TOTAL DRY WEIGHT, TOTDW	
 		TOTDW 	<- TOTWMF + TOTWML + TOTWST;
+		
+		// NOW COMPUTE VEGETATIVE PARTS OF PLANT ONLY
 		TOTVW	<- TOTWML + TOTWST;
 		ATV		<- TOTWML + TOTWST + ATL;
 		ATT		<- ATV    + TOTWMF; 
+		
+		// TOTAL NUMBERS
 		TOTNU	<- TOTNF  + TOTNLV;
+		
+		// TOTAL GROWING POINTS
 		NGP		<- TOTGL  + TOTGF+TOTST;
+		
+		// COMPUTE FRUIT TO LEAF RATIO
 		RVRW 	<- TOTWMF/(TOTWML+EPS);
+		
+		// COMPUTE FRUIT TO TOTAL WEIGHT
 		RTRW 	<- TOTWMF/(TOTDW+EPS);
+		
+		// COMPUTE RATIO OF FRUIT NO. TO LEAF NO.
 		RVRN 	<- TOTNF/(TOTNLV+EPS);
+		
+		// COMPUTE RATIO OF FRUIT TO TOTAL NUMBER OF GROWING POINTS
 		RTRN 	<- TOTNF/(TOTNU+EPS);
+		
+		// COMPUTE AVG TOTAL WTS
 		AVWMF 	<- TOTWMF/(TOTNF+EPS);
+		
+		// COMPUTE AVG VEG LEAF WTS WHOLE PLANT, G/LF
 		AVWML 	<- TOTWML/(TOTNLV+EPS);
-		DMCF84 	<- TABEX(DMC84T,XDMC,TIME,6);
+		
+		// NOW COMPUTE FRESH WEIGHTS OF MATURE FRUIT, G/M2
+		DMCF84 	<- TABEX(DMC84T,XDMC,float(TIME),6);
 		DMCF84  <- DMCF84=0?EPS:DMCF84;
-		FWFR10 	<- FWFR10+(PUSHM*WFRT[n_F-2]*DELT)*100.0/DMCF84;
+		FWFR10 	<- FWFR10+(PUSHM*WFRT[n_F-2]*DELT)*100.0/DMCF84;  // Fresh weight of picked fruit
+		
+		
 		// Aqui calcular peso fresco de lo que se recolecta
 		FWHVST	<- FWHVST+(PUSHM*WFRT[n_F-2]*DELT);
 		APFFW	<- ((PUSHM*(max([WFRT[n_F-2],0.0]))*DELT)*100.0/DMCF84) / ((PUSHM * FRTN[n_F-2] * DELT)+EPS);
 		do save_var("AVWMF",1,AVWMF);
 		do save_var("FWFR10",1,FWFR10);
+		do save_var("APFFW",1,APFFW);
 		do save_var("FWHVST",1,FWHVST);
 	}
 	
