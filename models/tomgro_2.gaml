@@ -15,7 +15,7 @@ global
 {
 	
 	bool	export 			<- true;
-	int		simulation_days	<- 230;
+	int		simulation_days	<- 150;
 	int 	simulation_duration ;
 	 	
 	// E1 lasts 110 days
@@ -319,7 +319,7 @@ species tomato_plant
 		LVSN[0]	<- LVSNI*PLM2;
 		//LVSN[1] <- LVSNI*PLM2;
 		BTOTNLV	<- LVSNI*PLM2;
-		STMS[0]	<- 4; // Representan los nudos
+		STMS[0]	<- 1;//4; // Representan los nudos
 		WLVS[0]	<- WLVSI*PLM2;
 		LFAR[0]	<- LFARI*PLM2;
 		XLAI	<- LFAR[0];
@@ -441,6 +441,26 @@ species tomato_plant
 			// INGRAT	--> Integration routine for LAI, dry matter content and numbers for each component of the plant (leaves, fruits and stem) 
 			do INGRAT;
 		//}
+		
+		
+		save data:[   cycle
+					, TIME
+					, PLSTN    
+					, XLAI 	
+					, XSLA
+					, TOTNST
+					, TOTWST
+					, TOTNLV
+					, TOTWML
+					, FWFR10
+					, APFFW
+					, TOTNF
+					, TOTWMF
+					, ATL
+					, ATT
+					, ATV 
+		] to:"output/GROW.csv" type:csv rewrite:false;		
+		
 		/* Re - star */
 		do update_density;
 		
@@ -479,7 +499,9 @@ species tomato_plant
 		GP			<- GP    + GPF    ;//* DTFAST ;
 		MAINT		<- MAINT + MAINTF ;//* DTFAST ;
 	
+		do save_var("PLSTN",1,PLSTN);
 			
+		/* 
 		save data:[   cycle
 					, DTFAST
 					, GENR	   
@@ -496,22 +518,8 @@ species tomato_plant
 				    , MAINT	  
 				    , GPFN
 		] to:"output/ACCUM.csv" type:csv rewrite:false;
-		
-		save data:[   cycle
-					, DTFAST
-					, GENRF    
-					, TEMFCF 	
-					, RDVLVF  
-					, RDVFRF  
-					, TTHF     
-					, TTLF  	   
-					, TTABF    
-					, FCO2  	 
-					, TSLAF   
-				    , CSLAF   
-				    , GPF   	    
-				    , MAINTF  
-		] to:"output/ACCUM_F.csv" type:csv rewrite:false;
+
+		*/
 	}
 	
 	// Computing Minhas water-yield model
