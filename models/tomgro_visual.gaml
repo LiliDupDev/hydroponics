@@ -25,6 +25,8 @@ global
 	
 	image_file f_leaf <- image_file("../includes/img/leaf.png");
 	
+	map<string,rgb> color_input <- ["co2":: #turquoise, "ppfd":: #gold, "temp":: #tomato];
+	
 	
 	int 	max_level 	<- 7;//8;
 	float 	min_energy 	<- 100.0;//300.0
@@ -41,6 +43,8 @@ global
 			base			<- location;
 			width 			<- 30.0;
 		}
+		
+		create vision_module number:1;
 	}
 		
 }
@@ -276,12 +280,6 @@ species leaf
 	float max_size 	<- 3.0;
 	
 	
-	// TOMGRO vars
-	
-	
-	
-	// 
-	
 	pair<float, point> rota <- rotation_composition(float(rnd(180))::{1, 0, 0}, float(rnd(180))::{0, 1, 0}, float(rnd(180))::{0, 0, 1});
 	
 	
@@ -443,21 +441,70 @@ species fruit
 }
 
 
+species vision_module
+{
+	
+	aspect obj
+	{
+		pair<float,point> r0 	<-  -90::{1,1,1};	
+		pair<float,point> pitch <-  5 * cos(cycle*10) ::{1,0,0};
+		pair<float,point> roll 	<- 	20*sin(cycle*3)::{0,1,0};  			// axis x
+		pair<float,point> yaw 	<- 	1*sin(cycle*7)::{0,0,1};
+		
+		draw obj_file("../includes/3d_obj/camera.obj", 90.0::{1,1,1}) at: location + {-80,0,10} size: 10 ;
+	}
+}
+
+
 experiment tomato_growth type: gui autorun: false {
+	
+	// Variables used to position camera
+	float w -> simulation.shape.width; 
+	float h -> simulation.shape.height;
+	point p -> first(plant_seed).location;
+	float factor <- 1.0;
+	
+	// Simulation variables
 	float minimum_cycle_duration <- 0.0005;
+	
 	float seed <- 0.05387546426306633;
+	
+	
+	// Screen
 	output {
 		display 'Tomato' type: opengl {//background: #lightskyblue axes: true toolbar: true {
+			
+			// Setting camera
 			light #ambient intensity: 150;
+			camera #default  location: {w / 2, h * 2, w / factor} target: {w / 2, h / 2, 0} ;
+			
 			//rotation angle: cycle/1000000 dynamic: true;
 			//camera #default location: {50.0,450,250} target: {50.0,50.0,40+80*(1-exp(-cycle/50000))} dynamic: true;
-			species plant_seed 	aspect: default;
-			species stem 		aspect: default;
-			//species stem_branch aspect: default;
-			species leaf 		aspect: default;
-			species fruit 		aspect: default;
+			
+			
+			// Creating chart with inputs
+			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # black transparency: 0.5 border: #black rounded: true
+            {
+            	//for each possible type, we draw a square with the corresponding color and we write the values
+                float y <- 30#px;
+	            loop type over: color_input.keys
+	            {
+	            	draw square(10#px) at: { 20#px, y } color: color_input[type] border: #white;
+	            	draw type at: { 40#px, y + 4#px } color: # white font: font("Helvetica", 18, #bold);
+	                y <- y + 25#px;
+	            }
+            }
+			
+			
+			
+			// Scenario
+			species plant_seed 		aspect: default;
+			species stem 			aspect: default;
+			species leaf 			aspect: default;
+			species fruit 			aspect: default;
+			species vision_module	aspect: obj;
 		}
-
+		
 	}
 
 }
