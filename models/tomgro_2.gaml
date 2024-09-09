@@ -25,7 +25,7 @@ global
 	{
 		step <- 1#hour;
 		//day_changes 			<- matrix(csv_file("../includes/day_changes.csv", true));
-		simulation_duration <- simulation_days * 24;
+		simulation_duration <- 1376;//simulation_days * 24;
 
 	//map<string,float>	yield_water_by_stage;//<- ["stageI"::0.0,"stageII"::0.0,"stageIII"::0.0];	
 		loop i from: 0 to: stages_data.rows - 1 step:1 {
@@ -611,7 +611,17 @@ species tomato_plant
 			//do save_var("PLSTN",1,PLSTN);
 			//do save_var("CO2AVG",1,CO2AVG);
 			//do save_var("SCO2",1,SCO2);
-			//do save_var("FCO2",1,FCO2);
+			do save_var("SCO2",1,SCO2);
+			do save_var("CO2AVG",1,CO2AVG);
+			do save_var("PLSTN",1,PLSTN);
+			do save_var("FCO2",1,FCO2);
+		}
+		else
+		{
+			do save_var("SCO2",2,SCO2);
+			do save_var("CO2AVG",2,CO2AVG);
+			do save_var("PLSTN",2,PLSTN);
+			do save_var("FCO2",2,FCO2);
 		}
 		
 		//do save_var("FCO2",2,FCO2);
@@ -628,10 +638,13 @@ species tomato_plant
 		
 		float age_leaf <- TABEX(RDVLVT,XLV,TMPA,9);
 		RDVLVF	<- age_leaf*SPTEL*FCO2;								// Compute leaf aging
-		//do save_var("RDVLVF",1,RDVLVF);
 		
 		RDVFRF	<- TABEX(RDVFRT,XFRT,TMPA,9)*SPTEL*FCO2;			// Compute fruit aging
 
+		do save_var("TMPA",1,TMPA);
+		do save_var("age_fruit",1,age_fruit);
+		do save_var("RDVFRF",1,RDVFRF);
+		
 		// Compute instantaneous eefect of temperature fruit set
 		TTHF <- 0.0 ;
 		TTLF <- 0.0 ;
@@ -932,9 +945,6 @@ species tomato_plant
 			LFAR[II]<-LFAR[II] +(PUSHL*(LFAR[II-1]-LFAR[II])+RCLFA[II])*DELT-DELAR[II]*DELT;
 		}
 		LVSN[0] <- (RCNL-PUSHL*LVSN[0]*DELT)+LVSN[0]-DENLR[0]*DELT;
-		
-		
-	
 		STMS[0] <- STMS[0]+(RCST-PUSHL*STMS[0])*DELT;
 		WLVS[0] <- (RCNL*WPLI-PUSHL*WLVS[0]+RCWLV[0])*DELT+WLVS[0]-DEWLR[0]*DELT;
 		WSTM[0] <- WSTM[0]+(RCST*WPLI*FRSTEM[0]-PUSHL*WSTM[0]+RCWST[0])*DELT;
@@ -1128,6 +1138,7 @@ species tomato_plant
 	}
 	
 	
+	
 	float TABEX(list<float> VAL, list<float> ARG, float DUMMY, int K)
 	{
 		float result <- 0.0;
@@ -1147,6 +1158,7 @@ species tomato_plant
 		
 		return result;
 	}
+	
 	
 	
 	action save_array(string array, int stp)

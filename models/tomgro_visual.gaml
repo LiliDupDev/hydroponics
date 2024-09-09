@@ -10,6 +10,9 @@ model tomgrovisual
 
 global 
 {
+	bool button;
+	
+	
 	float 	width 		<- shape.width;
 	float 	height 		<- shape.height;
 	point 	main_pos 	<- {width / 2, height / 2};
@@ -24,6 +27,8 @@ global
 	
 	
 	image_file f_leaf <- image_file("../includes/img/leaf.png");
+	
+	map<string,rgb> color_input <- ["co2":: #turquoise, "ppfd":: #gold, "temp":: #tomato];
 	
 	
 	int 	max_level 	<- 7;//8;
@@ -41,6 +46,17 @@ global
 			base			<- location;
 			width 			<- 30.0;
 		}
+		
+		create vision_module number:1;
+		create fan_module number:1;
+		create illumination_module number:1;
+		
+		/* 
+		create lamp {
+			location <- {0, 0, 0};
+		}
+		*/
+
 	}
 		
 }
@@ -276,12 +292,6 @@ species leaf
 	float max_size 	<- 3.0;
 	
 	
-	// TOMGRO vars
-	
-	
-	
-	// 
-	
 	pair<float, point> rota <- rotation_composition(float(rnd(180))::{1, 0, 0}, float(rnd(180))::{0, 1, 0}, float(rnd(180))::{0, 0, 1});
 	
 	
@@ -443,21 +453,113 @@ species fruit
 }
 
 
+species vision_module
+{
+	
+	aspect obj
+	{
+		pair<float,point> r0 	<-  -90::{1,1,1};	
+		pair<float,point> pitch <-  5 * cos(10) ::{1,0,0};//5 * cos(10) ::{1,0,0};		// axis Y		
+		pair<float,point> roll 	<-  20*sin(3)::{0,1,0};  		// axis X
+		pair<float,point> yaw 	<- 	1*sin(7)::{0,0,1};			// axis Z
+		
+		draw obj_file("../includes/3d_obj/camera.obj", rotation_composition(r0,pitch,roll,yaw)) at: location + {-80,0,10} size: 7 ;
+	}
+}
+
+
+
+
+
+
+species illumination_module
+{
+	aspect obj
+	{
+		pair<float,point> r0 	<-  -90::{1,1,1};	
+		pair<float,point> pitch <-   5 * cos(10)::{1,0,0};		// axis Y		
+		pair<float,point> roll 	<-  20 * sin(3)	::{0,1,0};  	// axis X
+		pair<float,point> yaw 	<- 	 1 * sin(7)	::{0,0,1};		// axis Z
+		
+		
+		// rotation_composition(r0,pitch,roll,yaw)
+		
+		draw obj_file("../includes/3d_obj/lamp.obj","../includes/3d_obj/lamp.mlt", 90.0::{1,0,0}) at: {main_pos.y,main_pos.x,50} size:5 ;
+	}
+}
+
+
+
+species fan_module
+{
+	aspect obj
+	{
+		pair<float,point> r0 	<-  -90::{1,1,1};	
+		pair<float,point> pitch <-   5 * cos(10) ::{1,0,0};		// axis Y		
+		pair<float,point> roll 	<-  20 * sin(3)::{0,1,0};  		// axis X
+		pair<float,point> yaw 	<- 	 1 * sin(7)::{0,0,1};			// axis Z
+		
+		draw obj_file("../includes/3d_obj/cooling_fan.obj","../includes/3d_obj/cooling_fan.mlt", 90.0::{-1,0,0}) at: location + {100,-60,5} size: 10 ;			
+	}
+
+}
+
+
 experiment tomato_growth type: gui autorun: false {
+	
+	// Variables used to position camera
+	float w -> simulation.shape.width; 
+	float h -> simulation.shape.height;
+	point p -> first(plant_seed).location;
+	float factor <- 1.0;
+	
+	// Simulation variables
 	float minimum_cycle_duration <- 0.0005;
 	float seed <- 0.05387546426306633;
+	
+	
+	parameter "turn on/off the ligth" var:button init:true;
+	
+	
+	// Screen
 	output {
-		display 'Tomato' type: opengl {//background: #lightskyblue axes: true toolbar: true {
-			light #ambient intensity: 150;
+		display 'Tomato' type: opengl background: #black{//background: #lightskyblue axes: true toolbar: true {
+			
+			// Setting camera
+			//light #ambient 	 intensity: 100;
+			camera #default  location: {w / 2, h * 2, w / factor} target: {w / 2, h / 2, 0} ;
+			
+			light #ambient intensity: button?150:50;
+			//light #default active:button type: #point location: {0, 0, 50} intensity: #magenta show: true;
 			//rotation angle: cycle/1000000 dynamic: true;
 			//camera #default location: {50.0,450,250} target: {50.0,50.0,40+80*(1-exp(-cycle/50000))} dynamic: true;
-			species plant_seed 	aspect: default;
-			species stem 		aspect: default;
-			//species stem_branch aspect: default;
-			species leaf 		aspect: default;
-			species fruit 		aspect: default;
+			
+			
+			// Creating chart with inputs
+			overlay position: { 5, 5 } size: { 180 #px, 100 #px } background: # white transparency: 0.5 border: #black rounded: true
+            {
+            	//for each possible type, we draw a square with the corresponding color and we write the values
+                float y <- 30#px;
+	            loop type over: color_input.keys
+	            {
+	            	draw square(10#px) at: { 20#px, y } color: color_input[type] border: #white;
+	            	draw type at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18, #bold);
+	                y <- y + 25#px;
+	            }
+            }
+			
+			
+			
+			// Scenario
+			species plant_seed 			aspect: default;
+			species stem 				aspect: default;
+			species leaf 				aspect: default;
+			species fruit 				aspect: default;
+			species vision_module		aspect: obj;
+			species illumination_module aspect: obj;
+			species fan_module			aspect: obj;
 		}
-
+		
 	}
 
 }
