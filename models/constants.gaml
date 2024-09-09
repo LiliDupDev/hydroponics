@@ -34,8 +34,11 @@ global
 	list<float> DISF 	<-[1.0, 1.0, 1.0, 1.0, 0.75, 0.0, 0.0, 0.0, 0.0, 0.0];
 	list<float> PGRED 	<-[0.0, 0.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0];
 	list<float> TMPG 	<-[-10.0, 0.0, 12.0, 20.0, 28.0, 35.0, 40.0, 80.0];
-	list<float> FPN 	<-[0.01, 0.01, 0.01, 0.2, 0.25, 1.5, 3.1, 3.1, 3.1, 3.1];   // Number of new fruits per node as function of PLSTN
-	list<float> XFPN 	<-[0.0, 6.0, 7.0, 8.0, 9.0, 13.0, 20.0, 24.0, 50.0, 90.0]; // Number of nodes per plant (PLSTN)
+
+	list<float> FPN 	<-[0.01, 0.01, 0.01, 0.2, 0.25, 1.5, 3.1, 3.1, 3.1, 3.1];
+	list<float> XFPN 	<-[0.0, 5.0, 6.0, 7.0, 9.0, 13.0, 20.0, 24.0, 50.0, 90.0];
+	//list<float> XFPN 	<-[0.0, 6.0, 7.0, 8.0, 9.0, 13.0, 20.0, 24.0, 50.0, 90.0];
+
 	list<float> GENTEM 	<-[0.0, 0.5, 0.95, 1.0, 0.2, 0.0];
 	list<float> XTEM 	<-[0.0, 6.0, 21.0, 28.0, 50.0, 80.0]; 								// 	DEG
 	list<float> GENRAT 	<-[0.55, 0.55, 0.55, 0.55, 0.55, 0.05]; 							// 	NODES/DAY
@@ -68,7 +71,7 @@ global
 	float CO2M	        <- 0.21		;			// Factor to calculate effect of C02 On specific leaf area		
 	float TPL	        <- 0.33		;			// Number of trusses per leaf after initiation of first truss
 	float EPS	        <- 10^(-12)	;	 		// Auxiliary variable, very small number (10E-12), to avoid zero division
-	float GREF	        <- 1.0;//0.7		;			// Growth efficiency, accounting for growth respiration
+	float GREF	        <- 1.0;//0.7		;	// Growth efficiency, accounting for growth respiration
 	float SPTEL	        <- 1.0		;			// Auxiliary value for adaptation of units
 	float GENFAC		<- 0.65		;			// Factor accounting for the effect of supply/demand ratio on initiation of new nodes	
 	float XLAIM			<- 3.0		;			// LAI above which death of leaves due to shading starts
@@ -100,9 +103,9 @@ global
 	int   INTOUT		<- 7		;			// lntervaI for output
 	float TRGH			<- 1.0		;			// Transmissivity of the greenhouse cover
 	float PLM2			<- 3.0		;			// Plant density // 3.0
-	float PLSTNI		<- 6.0;//6.0		;	// Initial plastochron index
-	float LVSNI			<- 5.0;//1.0		;	// Initial number of leaves per plant
-	float WLVSI			<- 0.5		;			// Initial weight of leaves  // For testing purpose the value was 0.005
+	float PLSTNI		<- 5.0;//6.0		;	// Initial plastochron index
+	float LVSNI			<- 4.0;//1.0		;	// Initial number of leaves per plant
+	float WLVSI			<- 0.0001	;			// Initial weight of leaves  // For testing purpose the value was 0.005
 	float LFARI			<- 0.002	;			// Initial leaf area per plant
 	float QE			<- 0.056	;	
 	float XK			<- 0.58		;
