@@ -102,7 +102,7 @@ global
 	int   NFAST			<- 24		;			// Number of time steps within the fast loop during one day
 	int   INTOUT		<- 7		;			// lntervaI for output
 	float TRGH			<- 1.0		;			// Transmissivity of the greenhouse cover
-	float PLM2			<- 3.0		;			// Plant density // 3.0
+	float PLM2			<- 1.0;//3.0		;			// Plant density // 3.0
 	float PLSTNI		<- 5.0;//6.0		;	// Initial plastochron index
 	float LVSNI			<- 4.0;//1.0		;	// Initial number of leaves per plant
 	float WLVSI			<- 0.0001	;			// Initial weight of leaves  // For testing purpose the value was 0.005

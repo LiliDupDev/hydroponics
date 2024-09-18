@@ -205,7 +205,7 @@ species tomato_plant
 	float		CLSDMF	<- 0.0;						// Proportion of fruit sink demand that is satisfied		
 	float		FABOR	<- 0.0;						// Fraction of fruit aborted in first fruit age class			
 	list<float>	PNFRT	;							// Potential sink capacity per fruit age class			
-	//list<float>	POF_F	;							// Relative potential sink capacity per fruit age class			
+	//list<float>	POF_F	;						// Relative potential sink capacity per fruit age class			
 	
 	//  ratios
 	float 		RVRW 	<- 0.0;						// Ratio of total fruit weight to total leaf weight			
@@ -319,7 +319,7 @@ species tomato_plant
 		LVSN[0]	<- LVSNI*PLM2;
 		//LVSN[1] <- LVSNI*PLM2;
 		BTOTNLV	<- LVSNI*PLM2;
-		STMS[0]	<- 1;//4; // Representan los nudos
+		STMS[0]	<- 1;//4;// Originalmente era LVSN[0] // Representan los nudos
 		WLVS[0]	<- WLVSI*PLM2;
 		LFAR[0]	<- LFARI*PLM2;
 		XLAI	<- LFAR[0];
@@ -468,6 +468,8 @@ species tomato_plant
 		{
 			do restart_vars;
 		}
+		
+		do save_array("FRTN",1);
 	}
 	
 	
@@ -642,7 +644,6 @@ species tomato_plant
 		RDVFRF	<- TABEX(RDVFRT,XFRT,TMPA,9)*SPTEL*FCO2;			// Compute fruit aging
 
 		do save_var("TMPA",1,TMPA);
-		do save_var("age_fruit",1,age_fruit);
 		do save_var("RDVFRF",1,RDVFRF);
 		
 		// Compute instantaneous eefect of temperature fruit set
