@@ -13,6 +13,8 @@ import "agents/TOMGRO_unit.gaml"
 
 global {
 	
+	image_file terrain <- image_file("../includes/img/top-view-dark-soil-background.jpg");
+	
 	map<string,rgb> color_input <- ["co2":: #turquoise, "ppfd":: #gold, "temp":: #tomato];
 	map<string,float> environment_val <- ["co2":: 0.0, "ppfd":: 0.0, "temp":: 0.0];
 	
@@ -80,7 +82,8 @@ global {
 		ask crop_distribution 
 		{				
 	        grid_value <- float(distribution[{grid_x,grid_y}]);
-	        color <- (grid_value = 1.0) ? #palegoldenrod : #white;
+	        //color <- (grid_value = 1.0) ? #palegoldenrod : #white;
+	        
 	        if grid_value=1.0
 	        {
 	        	create tomato number:1 
@@ -162,6 +165,7 @@ grid crop_distribution width:distribution_by_width height:distribution_by_length
 {
 
 }
+
 
 species tomato
 {
@@ -307,7 +311,8 @@ experiment main type: gui{
     	monitor "Fruit - Number" 		value: growing_vals["fruit-no"]		 ;
     	monitor "LAI" 					value: growing_vals["lai"]			 ;
     	
-        display display_grid {
+        display display_grid type: 3d axes:false 
+        {
         	
         	// Creating chart with inputs
 			overlay position: { 5, 5 } size: { 170 #px, 160 #px } background: # white transparency: 0.5 border: #black rounded: true
@@ -328,8 +333,11 @@ experiment main type: gui{
 	            y <- y + 25#px;
 	            
             }
+            
+            image terrain position: {0.05, 0.05} size: {1.0, 1.0} refresh: false;
+        	
 			
-            grid crop_distribution border:#black;
+            //grid crop_distribution border:#black;
             species tomato aspect:default refresh:true;
         }
     }
