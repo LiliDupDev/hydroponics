@@ -38,6 +38,7 @@ global
 	float 	main_split_angle_beta 		<- 20.0;
 	float 	secondary_split_angle_beta 	<- 90.0;
 	
+	
 	init
 	{
 		create plant_seed number:1 
