@@ -23,6 +23,8 @@ global
 	float 	level_step 			<- 0.7; // 0.8
 	float 	env_size 			<- 0.5 * length_max / (1 - level_step);
 	
+
+	
 	int 	max_level 					<- 7;//8;
 	float 	min_energy					<- 100.0;//300.0
 	float 	main_split_angle_alpha 		<- 30.0;
@@ -57,11 +59,12 @@ species plant_part {
 
 
 species plant_seed parent: plant_part {
-	bool has_tree <- false;
+	bool has_main_stem <- false;
 	point end -> self.location;
 	point vector <- {0, 0, 1};
+	
 
-	reflex create_tree  {
+	reflex create_tree   when: !has_main_stem{
 		create stem {
 			base 		<- myself.location;
 			self.end 	<- self.base;
@@ -71,12 +74,13 @@ species plant_seed parent: plant_part {
 			parent 		<- myself;
 		}
 
-		has_tree <- true;
+		has_main_stem <- true;
 	}
+
 
 	aspect default 
 	{
-		draw cone3D(6.0, 6.0) at: location color: #olive;
+		//draw cone3D(6.0, 6.0) at: location color: #olive;
 	}
 }
 
@@ -87,6 +91,7 @@ species stem parent: plant_part
 	float 	length 		<- 0.0;
 	float 	width 		<- 0.0; 
 	bool 	can_split 	<- true;
+	bool 	is_main_stem<- true;
 	
 	
 	aspect default {
@@ -97,19 +102,50 @@ species stem parent: plant_part
 	{
 		energy 	<- energy + 0.3;
 		
+		float level_correction <- 1.8 * 0.3 ^ level;
+		
 		base 	<- parent.end;
 		length 	<- length > max_branch_length ? length :level_step ^ level * (length_max * (1 - min([1, exp(-energy / 1000)])));
-		width 	<- width > max_width_branch ? width :length / 10 * (4 + max_level - level) / (4 + max_level);
+		width 	<- width > max_width_stem ? width : length / level_correction / 13.0; //width > max_width_branch ? width :length / 10 * (4 + max_level - level) / (4 + max_level);
 		end 	<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
 		
 		
+		save data:[ cycle
+					,	parent.name
+					,	name
+					, 	width
+					,  	alpha
+					,	beta
+					, 	level
+					,	base
+					,	end
+				] to:"stem_properties.csv" format:"csv" rewrite:false;
 	}
+	
+	
+		// Only elements in the main stem can split
+	reflex split when: can_split and (level < max_level) and (min_energy < energy) {
+		can_split <- false;
+		
+		int possible_burgeon <- rnd(8);
+	
+		create stem number: 1 {
+			self.level 			<- myself.level + 0.3;
+			self.base			<- myself.base;
+			self.end			<- myself.base;
+			self.alpha 			<- myself.alpha - 10 + rnd(200) / 10;
+			self.beta 			<- myself.beta - 10 + rnd(200) / 10;
+			self.parent 		<- myself;
+			self.is_main_stem 	<- false;
+		}
+	}
+	
 	
 }
 
 
 
-experiment tomato_growth type: gui autorun: false 
+experiment tomato_growth type: gui  
 {
 	// Variables used to position camera
 	float w -> simulation.shape.width; 
@@ -124,7 +160,8 @@ experiment tomato_growth type: gui autorun: false
 	
 	
 	// Screen
-	output {
+	output 
+	{
 		display 'Tomato' type: opengl background: #black{//background: #lightskyblue axes: true toolbar: true {
 			
 			// Setting camera

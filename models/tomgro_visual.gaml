@@ -7,6 +7,7 @@
 
 
 model tomgrovisual
+//import "constants.gaml"
 
 global 
 {
@@ -29,6 +30,7 @@ global
 	image_file f_leaf <- image_file("../includes/img/leaf.png");
 	
 	map<string,rgb> color_input <- ["co2":: #turquoise, "ppfd":: #gold, "temp":: #tomato];
+	map<string,float> environment_val <- ["co2":: 120.0, "ppfd":: 350.0, "temp":: 20.0];
 	
 	
 	int 	max_level 	<- 7;//8;
@@ -48,9 +50,9 @@ global
 			width 			<- 30.0;
 		}
 		
-		create vision_module number:1;
-		create fan_module number:1;
-		create illumination_module number:1;
+		//create vision_module number:1;
+		//create fan_module number:1;
+		//create illumination_module number:1;
 		
 		/* 
 		create lamp {
@@ -83,25 +85,31 @@ species plant_seed parent: plant_part
 	{
 		create stem {
 			base 		<- myself.location;
-			self.end 	<- self.base;
+			self.end 	<- myself.location;
 			alpha 		<- rnd(100) * 360 / 100;
 			beta 		<- 90.0;
 			level 		<- 1.0;
 			parent 		<- myself;
 			is_main_stem<- true;
 			
-			/*
-			save data:[ cycle
-					,	self.parent.name
-					,	self.name
-					,  	self.alpha
-					,	self.beta
-					, 	self.level
-					,	self.base
-					,	self.end
-				] to:"stem_properties.csv" type:csv rewrite:false;
-				* 
-				*/
+		//save data:[   	cycle
+		//			,	0
+		//			,	name
+		//			, 	parent.name
+		//			,	is_main_stem
+		//			,	can_split
+		//			,	is_branch
+		//			,  	energy
+		//			,	level
+		//			,	length
+		//			,	width
+		//			,	base.x
+		//			,	base.y
+		//			,	base.z
+		//			,	end.x
+		//			,	end.y
+		//			,	end.z
+		//	] to:"stem_growth.csv" format:"csv" rewrite:false;	
 		}
 		
 		has_main_stem <- true;
@@ -117,6 +125,8 @@ species plant_seed parent: plant_part
 
 species burgeon parent: plant_part
 {
+	bool is_truss;
+	
 	reflex growth {
 		energy <- energy + 0.3;
 	}
@@ -169,7 +179,7 @@ species stem parent: plant_part
 	aspect default
 	{
 		draw line([base, end], width) color: #green; 
-		//draw "STEM= "+name at: end + {-3,1.5} color: #black font: font('Default', 12, #bold) ; 
+		draw "STEM= "+name at: end + {-3,1.5} color: #black font: font('Default', 12, #bold) ; 
 	}
 	
 	reflex growth
@@ -179,15 +189,17 @@ species stem parent: plant_part
 		if !is_branch
 		{
 			//base 	<- parent.end;
-			end <- parent.base;
+			//end <- parent.base;
+			base <- is_main_stem ? parent.location :parent.end;
 			
 			// Este código es crecimiento 
 			float level_correction <- 1.8 * 0.3 ^ level;
 			length 		<- length > max_stem_length ? length : level_correction * (length_max * (1 - min([1, exp(-energy / 1000)])));
+			//length 		<- level_correction * (length_max * (1 - min([1, exp(-energy / 100)])));
 			width 		<- width > max_width_stem ? width :length / level_correction / 13.0;
 			end 		<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};	
-			base 		<- end - {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
-			parent.base <- end;
+			//base 		<- end - {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
+			//parent.base <- end;
 		}
 		else
 		{
@@ -198,25 +210,26 @@ species stem parent: plant_part
 			
 		}
 		
-		/* 
-		save data:[   	cycle
-					,	name
-					, 	parent.name
-					,	is_main_stem
-					,	can_split
-					,	is_branch
-					,  	energy
-					,	level
-					,	length
-					,	width
-					,	base.x
-					,	base.y
-					,	base.z
-					,	end.x
-					,	end.y
-					,	end.z
-			] to:"stem_growth.csv" type:csv rewrite:false;	
-		 */
+		
+		//save data:[   	cycle
+		//			,	2
+		//			,	name
+		//			, 	parent.name
+		//			,	is_main_stem
+		//			,	can_split
+		//			,	is_branch
+		//			,  	energy
+		//			,	level
+		//			,	length
+		//			,	width
+		//			,	base.x
+		//			,	base.y
+		//			,	base.z
+		//			,	end.x
+		//			,	end.y
+		//			,	end.z
+		//	] to:"stem_growth.csv" format:"csv" rewrite:false;	
+		 
 			
 	}
 	
@@ -225,43 +238,40 @@ species stem parent: plant_part
 	reflex split when: can_split and (level < max_level) and (min_energy < energy) {
 		can_split <- false;
 		
+		//int possible_burgeon <- rnd(8);
+		//loop i from: 0 to: possible_burgeon
+		//{
+		//	float branch1_alpha	<- rnd(100) / 100 * 360;
+		//	float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
+		//	//if flip(0.7) 
+		//	//{
+		//	//	create burgeon number: 1 {
+		//	//		self.level 	<- myself.level + 2.1;
+		//	//		point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.base.z + myself.length)};
+		//	//		self.base 	<- p_location;//myself.end;
+		//	//		self.end	<- p_location;//myself.end;
+		//	//		self.alpha 	<- branch1_alpha;
+		//	//		self.beta 	<- branch1_beta;
+		//	//		self.parent <- myself;
+		//	//		
+		//	//		
+		//	//		//save data:[   	cycle
+		//	//		//			,	name
+		//	//		//			, 	parent.name
+		//	//		//			,	base.x
+		//	//		//			,	base.y
+		//	//		//			,	base.z
+		//	//		//			,	end.x
+		//	//		//			,	end.y
+		//	//		//			,	end.z
+		//	//		//] to:"burgeon_growth.csv" format:"csv" rewrite:false;
+		//	//		
+		//	//	}
+		//	//}	
+		//} 
+		do create_branch(4);
 		
-		
-		int possible_burgeon <- rnd(8);
-		loop i from: 0 to: possible_burgeon
-		{
-			float branch1_alpha	<- rnd(100) / 100 * 360;
-			float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
-			if flip(0.7) 
-			{
-				create burgeon number: 1 {
-					self.level 	<- myself.level + 2.1;
-					point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.base.z + myself.length)};
-					self.base 	<- p_location;//myself.end;
-					self.end	<- p_location;//myself.end;
-					self.alpha 	<- branch1_alpha;
-					self.beta 	<- branch1_beta;
-					self.parent <- myself;
-					
-					/* 
-					save data:[   	cycle
-								,	name
-								, 	parent.name
-								,	base.x
-								,	base.y
-								,	base.z
-								,	end.x
-								,	end.y
-								,	end.z
-					] to:"stem_growth.csv" type:csv rewrite:false;
-					*/
-				}
-			}	
-				
-		} 
-		
-		 
-
+		// segmento del tallo principal
 		create stem number: 1 {
 			self.level 			<- myself.level + 0.3;
 			self.base			<- myself.base;
@@ -270,9 +280,48 @@ species stem parent: plant_part
 			self.beta 			<- myself.beta - 10 + rnd(200) / 10;
 			self.parent 		<- myself;
 			self.is_main_stem 	<- false;
+			
+			//save data:[   	cycle
+			//		,	3
+			//		,	name
+			//		, 	parent.name
+			//		,	is_main_stem
+			//		,	can_split
+			//		,	is_branch
+			//		,  	energy
+			//		,	level
+			//		,	length
+			//		,	width
+			//		,	base.x
+			//		,	base.y
+			//		,	base.z
+			//		,	end.x
+			//		,	end.y
+			//		,	end.z
+			//] to:"stem_growth.csv" format:"csv" rewrite:false;	
 		}
-
 	}
+	
+	action create_branch(int number)
+	{
+		loop i from: 0 to: number
+		{
+			float branch1_alpha	<- rnd(100) / 100 * 360;
+			float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
+			
+			create burgeon number: 1 
+			{
+				self.level 	<- myself.level + 2.1;
+				point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.base.z + myself.length)};
+				self.base 	<- p_location;//myself.end;
+				self.end	<- p_location;//myself.end;
+				self.alpha 	<- branch1_alpha;
+				self.beta 	<- branch1_beta;
+				self.parent <- myself;
+			}			
+		}
+	}
+	
 	
 }
 
@@ -469,10 +518,6 @@ species vision_module
 }
 
 
-
-
-
-
 species illumination_module
 {
 	aspect obj
@@ -524,7 +569,7 @@ experiment tomato_growth type: gui autorun: false {
 	
 	// Screen
 	output {
-		display 'Tomato' type: opengl background: #black{//background: #lightskyblue axes: true toolbar: true {
+		display 'Tomato' type: opengl background: #white{//background: #lightskyblue axes: true toolbar: true {
 			
 			// Setting camera
 			//light #ambient 	 intensity: 100;
@@ -543,8 +588,8 @@ experiment tomato_growth type: gui autorun: false {
                 float y <- 30#px;
 	            loop type over: color_input.keys
 	            {
-	            	draw square(10#px) at: { 20#px, y } color: color_input[type] border: #white;
-	            	draw type at: { 40#px, y + 4#px } color: #white font: font("Helvetica", 18, #bold);
+	            	draw square(10#px) at: { 20#px, y } color: color_input[type] border: #black;
+	            	draw type+": "+string(environment_val[type]) at: { 40#px, y + 4#px } color: #black font: font("Helvetica", 18, #bold);
 	                y <- y + 25#px;
 	            }
             }
@@ -556,9 +601,9 @@ experiment tomato_growth type: gui autorun: false {
 			species stem 				aspect: default;
 			species leaf 				aspect: default;
 			species fruit 				aspect: default;
-			species vision_module		aspect: obj;
-			species illumination_module aspect: obj;
-			species fan_module			aspect: obj;
+			//species vision_module		aspect: obj;
+			//species illumination_module aspect: obj;
+			//species fan_module			aspect: obj;
 		}
 		
 	}

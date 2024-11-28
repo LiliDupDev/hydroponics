@@ -1,7 +1,7 @@
 /**
 * Name: CropYieldv0
-* Based on the internal empty template. 
-* Author: Lili
+* Crop model for tomato based on TOMGRO
+* Author: Liliana Durán Polanco
 * Tags: 
 */
 
@@ -16,7 +16,7 @@ global {
 	image_file terrain <- image_file("../includes/img/top-view-dark-soil-background.jpg");
 	
 	map<string,rgb> color_input <- ["co2":: #turquoise, "ppfd":: #gold, "temp":: #tomato];
-	map<string,float> environment_val <- ["co2":: 0.0, "ppfd":: 0.0, "temp":: 0.0];
+	map<string,float> environment_val <- ["co2":: 120.0, "ppfd":: 350.0, "temp":: 20.0];
 	
 	int axis_x 	<- 6;
 	int axis_y  <- 2;
