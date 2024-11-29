@@ -26,15 +26,18 @@ global
 	float 	level_step 	<- 0.7; // 0.8
 	float 	env_size 	<- 0.5 * length_max / (1 - level_step);
 	
+	int	max_node_by_stem <- 5;
 	
-	image_file f_leaf <- image_file("../includes/img/leaf.png");
+	
+	image_file f_leaf 	<- image_file("../includes/img/leaf.png");
+	image_file f_flower <- image_file("../includes/img/tomato_flower.png");
 	
 	map<string,rgb> color_input <- ["co2":: #turquoise, "ppfd":: #gold, "temp":: #tomato];
 	map<string,float> environment_val <- ["co2":: 120.0, "ppfd":: 350.0, "temp":: 20.0];
 	
 	
 	int 	max_level 	<- 7;//8;
-	float 	min_energy 	<- 100.0;//300.0
+	float 	min_energy 	<- 300.0;//100.0;//300.0
 	float 	main_split_angle_alpha 		<- 30.0;
 	float 	secondary_split_angle_alpha <- 90.0;
 	float 	main_split_angle_beta 		<- 20.0;
@@ -73,7 +76,7 @@ species plant_part
 	float 		beta 		<- 0.0;
 	float 		level 		<- 1.0;
 	list 		children	<- nil;
-	float 		energy <- 0.0;
+	float 		energy 		<- 0.0;
 }
 
 
@@ -125,7 +128,6 @@ species plant_seed parent: plant_part
 
 species burgeon parent: plant_part
 {
-	bool is_truss;
 	
 	reflex growth {
 		energy <- energy + 0.3;
@@ -159,6 +161,7 @@ species burgeon parent: plant_part
 			self.end 	 <- self.base + {5 * cos(beta) * cos(alpha), 5 * cos(beta) * sin(alpha), 5 * sin(beta)};
 			tmp.children <- tmp.children + self;
 			self.creation_cycle <- cycle;
+			self.is_truss		<- index+1 mod 5 = 0 ? true : false;
 		}
 		
  
@@ -179,7 +182,7 @@ species stem parent: plant_part
 	aspect default
 	{
 		draw line([base, end], width) color: #green; 
-		draw "STEM= "+name at: end + {-3,1.5} color: #black font: font('Default', 12, #bold) ; 
+		//draw "STEM= "+name at: end + {-3,1.5} color: #black font: font('Default', 12, #bold) ; 
 	}
 	
 	reflex growth
@@ -236,7 +239,11 @@ species stem parent: plant_part
 	
 	// Only elements in the main stem can split
 	reflex split when: can_split and (level < max_level) and (min_energy < energy) {
-		can_split <- false;
+		if length(children) = 5
+		{
+			can_split <- false;
+		}
+		
 		
 		//int possible_burgeon <- rnd(8);
 		//loop i from: 0 to: possible_burgeon
@@ -269,7 +276,7 @@ species stem parent: plant_part
 		//	//	}
 		//	//}	
 		//} 
-		do create_branch(4);
+		do create_branch(1);
 		
 		// segmento del tallo principal
 		create stem number: 1 {
@@ -280,7 +287,6 @@ species stem parent: plant_part
 			self.beta 			<- myself.beta - 10 + rnd(200) / 10;
 			self.parent 		<- myself;
 			self.is_main_stem 	<- false;
-			
 			//save data:[   	cycle
 			//		,	3
 			//		,	name
@@ -311,14 +317,16 @@ species stem parent: plant_part
 			
 			create burgeon number: 1 
 			{
-				self.level 	<- myself.level + 2.1;
-				point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.base.z + myself.length)};
+				self.level 	<- myself.level + 1.1;//2.1;
+				point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.end.z)};//myself.base.z + myself.length)};
 				self.base 	<- p_location;//myself.end;
 				self.end	<- p_location;//myself.end;
 				self.alpha 	<- branch1_alpha;
 				self.beta 	<- branch1_beta;
 				self.parent <- myself;
-			}			
+				self.parent.children <+ myself;		
+			}
+			
 		}
 	}
 	
@@ -341,6 +349,7 @@ species leaf
 	float size 		<- 3.0;//0.5;
 	float max_size 	<- 3.0;
 	
+	bool is_truss;
 	
 	pair<float, point> rota <- rotation_composition(float(rnd(180))::{1, 0, 0}, float(rnd(180))::{0, 1, 0}, float(rnd(180))::{0, 0, 1});
 	
@@ -348,7 +357,7 @@ species leaf
 	aspect default {
 		draw line([base, end], min([parent.width, 1])) color: #green;
 		//draw triangle(size) rotate: rota at: end color: #lime;
-		draw f_leaf size: size rotate: rota at: end ;
+		draw is_truss ? f_flower : f_leaf size: size rotate: rota at: end ;
 	}
 	
 	
@@ -374,64 +383,65 @@ species leaf
 			float branch3_alpha <- parent.alpha + side3 * rnd(100) * factor;
 			float branch4_alpha <- parent.alpha - side3 * rnd(100) * factor;
 			int sideb <- -1 + 2 * rnd(1);
-			 factor <- secondary_split_angle_beta / 100;
+			
+			factor <- secondary_split_angle_beta / 100;
 			float branch1_beta <- parent.beta + sideb * rnd(100) / 100 * main_split_angle_beta;
 			float branch2_beta <- -20 + rnd(100) * factor;
 			float branch3_beta <- -20 + rnd(100) * factor;
 			float branch4_beta <- -20 + rnd(100) * factor;
 			
-			create burgeon number: 1 {
-				self.level 	<- myself.parent.level + 1;
-				point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
-				
-				self.base 	<- ini_location;//myself.base;
-				self.end 	<- ini_location;//self.base;
-				self.alpha 	<- branch1_alpha;
-				self.beta 	<- branch1_beta;
-				self.parent <- myself.parent;
-			}
+			//create burgeon number: 1 {
+			//	self.level 	<- myself.parent.level + 1;
+			//	point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+			//	
+			//	self.base 	<- ini_location;//myself.base;
+			//	self.end 	<- ini_location;//self.base;
+			//	self.alpha 	<- branch1_alpha;
+			//	self.beta 	<- branch1_beta;
+			//	self.parent <- myself.parent;
+			//}
 	
-			create burgeon number: 1 {
-				self.level 	<- myself.parent.level + 1.2;
-				
-				point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
-				
-				self.base 	<- ini_location;//myself.base; 
-				self.end 	<- ini_location;//self.base;   
-				self.alpha 	<- branch2_alpha;
-				self.beta 	<- branch2_beta;
-				self.parent <- myself.parent;
-			}
+			//create burgeon number: 1 {
+			//	self.level 	<- myself.parent.level + 1.2;
+			//	
+			//	point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+			//	
+			//	self.base 	<- ini_location;//myself.base; 
+			//	self.end 	<- ini_location;//self.base;   
+			//	self.alpha 	<- branch2_alpha;
+			//	self.beta 	<- branch2_beta;
+			//	self.parent <- myself.parent;
+			//}
 			
-			if flip(0.6) {
-				create burgeon number: 1 {
-					self.level 	<- myself.parent.level + 1.7;
-					
-					point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
-					
-					self.base 	<- ini_location;//myself.base; 
-					self.end 	<- ini_location;//self.base;   
-					self.alpha 	<- branch3_alpha;
-					self.beta 	<- branch3_beta;
-					self.parent <- myself.parent;
-				}
-	
-			}
+			//if flip(0.6) {
+			//	create burgeon number: 1 {
+			//		self.level 	<- myself.parent.level + 1.7;
+			//		
+			//		point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+			//		
+			//		self.base 	<- ini_location;//myself.base; 
+			//		self.end 	<- ini_location;//self.base;   
+			//		self.alpha 	<- branch3_alpha;
+			//		self.beta 	<- branch3_beta;
+			//		self.parent <- myself.parent;
+			//	}
+	        //
+			//}
 			
 			
-			if flip(0.3) {
-				create burgeon number: 1 {
-					self.level 	<- myself.parent.level + 2;
-					point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
-					
-					self.base 	<- ini_location;//myself.base; 
-					self.end 	<- ini_location;//self.base;  
-					self.alpha 	<- branch4_alpha;
-					self.beta 	<- branch4_beta;
-					self.parent <- myself.parent;
-				}
-	
-			}
+			//if flip(0.3) {
+			//	create burgeon number: 1 {
+			//		self.level 	<- myself.parent.level + 2;
+			//		point ini_location <- {myself.base.x, myself.base.y, rnd(myself.base.z, myself.parent.length)};
+			//		
+			//		self.base 	<- ini_location;//myself.base; 
+			//		self.end 	<- ini_location;//self.base;  
+			//		self.alpha 	<- branch4_alpha;
+			//		self.beta 	<- branch4_beta;
+			//		self.parent <- myself.parent;
+			//	}
+	        //
+			//}
 			
 			/* 
 			if flip(0.8) {
@@ -447,19 +457,19 @@ species leaf
 			}
 			*/
 			
-			
-			if flip(0.3) {
-				create fruit number: (1 + rnd(2)) {
-					self.base 	<- myself.base;
-					self.end 	<- myself.base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
-					self.parent <- myself.parent;
-					self.alpha 	<- myself.alpha + (-1 + 2 * rnd(1)) * 30;
-					self.beta 	<- -40.0 + rnd(80);
-				}
-				
-				//write "fruit created";
-			 
-			}
+			//
+			//if flip(0.3) {
+			//	create fruit number: (1 + rnd(2)) {
+			//		self.base 	<- myself.base;
+			//		self.end 	<- myself.base + {3 * cos(beta) * cos(alpha), 3 * cos(beta) * sin(alpha), 3 * sin(beta)};
+			//		self.parent <- myself.parent;
+			//		self.alpha 	<- myself.alpha + (-1 + 2 * rnd(1)) * 30;
+			//		self.beta 	<- -40.0 + rnd(80);
+			//	}
+			//	
+			//	//write "fruit created";
+			// 
+			//}
 			
 			
 			self.parent.children <- self.parent.children - self;		
