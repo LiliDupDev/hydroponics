@@ -22,7 +22,7 @@ global
 	float 	max_width_stem		<- 1.5;
 	float 	max_width_branch	<- 1.5;
 	float 	max_branch_length	<- 3.0;
-	float 	max_stem_length		<- 7.0;
+	float 	max_stem_length		<- 20.0;//7.0;
 	float 	level_step 	<- 0.7; // 0.8
 	float 	env_size 	<- 0.5 * length_max / (1 - level_step);
 	
@@ -238,7 +238,8 @@ species stem parent: plant_part
 	
 	
 	// Only elements in the main stem can split
-	reflex split when: can_split and (level < max_level) and (min_energy < energy) {
+	reflex split when: can_split and (level < max_level) and length > 20.0 //and (min_energy < energy) 
+	{
 		if length(children) = 5
 		{
 			can_split <- false;
@@ -279,33 +280,33 @@ species stem parent: plant_part
 		do create_branch(1);
 		
 		// segmento del tallo principal
-		create stem number: 1 {
-			self.level 			<- myself.level + 0.3;
-			self.base			<- myself.base;
-			self.end			<- myself.base;
-			self.alpha 			<- myself.alpha - 10 + rnd(200) / 10;
-			self.beta 			<- myself.beta - 10 + rnd(200) / 10;
-			self.parent 		<- myself;
-			self.is_main_stem 	<- false;
-			//save data:[   	cycle
-			//		,	3
-			//		,	name
-			//		, 	parent.name
-			//		,	is_main_stem
-			//		,	can_split
-			//		,	is_branch
-			//		,  	energy
-			//		,	level
-			//		,	length
-			//		,	width
-			//		,	base.x
-			//		,	base.y
-			//		,	base.z
-			//		,	end.x
-			//		,	end.y
-			//		,	end.z
-			//] to:"stem_growth.csv" format:"csv" rewrite:false;	
-		}
+		//create stem number: 1 {
+		//	self.level 			<- myself.level + 0.3;
+		//	self.base			<- myself.base;
+		//	self.end			<- myself.base;
+		//	self.alpha 			<- myself.alpha - 10 + rnd(200) / 10;
+		//	self.beta 			<- myself.beta - 10 + rnd(200) / 10;
+		//	self.parent 		<- myself;
+		//	self.is_main_stem 	<- false;
+		//	//save data:[   	cycle
+		//	//		,	3
+		//	//		,	name
+		//	//		, 	parent.name
+		//	//		,	is_main_stem
+		//	//		,	can_split
+		//	//		,	is_branch
+		//	//		,  	energy
+		//	//		,	level
+		//	//		,	length
+		//	//		,	width
+		//	//		,	base.x
+		//	//		,	base.y
+		//	//		,	base.z
+		//	//		,	end.x
+		//	//		,	end.y
+		//	//		,	end.z
+		//	//] to:"stem_growth.csv" format:"csv" rewrite:false;	
+		//}
 	}
 	
 	action create_branch(int number)
@@ -561,8 +562,8 @@ species fan_module
 }
 
 
-experiment tomato_growth type: gui autorun: false {
-	
+experiment tomato_growth type: gui autorun: false 
+{
 	// Variables used to position camera
 	float w -> simulation.shape.width; 
 	float h -> simulation.shape.height;
@@ -570,7 +571,8 @@ experiment tomato_growth type: gui autorun: false {
 	float factor <- 1.0;
 	
 	// Simulation variables
-	float minimum_cycle_duration <- 0.0005;
+	//float minimum_cycle_duration <- 0.0005;
+	float minimum_cycle_duration <- 0.05;
 	float seed <- 0.05387546426306633;
 	
 	
