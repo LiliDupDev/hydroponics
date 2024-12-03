@@ -327,11 +327,8 @@ species stem parent: plant_part
 				self.parent <- myself;
 				self.parent.children <+ myself;		
 			}
-			
 		}
 	}
-	
-	
 }
 
 
@@ -471,8 +468,6 @@ species leaf
 			//	//write "fruit created";
 			// 
 			//}
-			
-			
 			self.parent.children <- self.parent.children - self;		
 		}
 
