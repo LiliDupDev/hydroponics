@@ -17,7 +17,7 @@ global
 	float 	width 		<- shape.width;
 	float 	height 		<- shape.height;
 	point 	main_pos 	<- {width / 2, height / 2};
-	float 	length_max 	<- 75.0;//100.0;
+	float 	length_max 	<- 200.0;//100.0;//75.0;//100.0;
 	float 	width_ini 	<- 0.25; // 1.0
 	float 	max_width_stem		<- 1.5;
 	float 	max_width_branch	<- 1.5;
@@ -37,7 +37,7 @@ global
 	
 	
 	int 	max_level 	<- 7;//8;
-	float 	min_energy 	<- 300.0;//100.0;//300.0
+	float 	min_energy 	<- 100.0;//300.0
 	float 	main_split_angle_alpha 		<- 30.0;
 	float 	secondary_split_angle_alpha <- 90.0;
 	float 	main_split_angle_beta 		<- 20.0;
@@ -46,6 +46,8 @@ global
 	
 	init
 	{
+		step <- 1#h;
+		
 		create plant_seed number:1 
 		{
 			location 		<- main_pos;
@@ -93,7 +95,8 @@ species plant_seed parent: plant_part
 			beta 		<- 90.0;
 			level 		<- 1.0;
 			parent 		<- myself;
-			is_main_stem<- true;
+			is_main_stem		 <- true;
+			node_rate_appareance <- 0.5;
 			
 		//save data:[   	cycle
 		//			,	0
@@ -133,10 +136,10 @@ species burgeon parent: plant_part
 		energy <- energy + 0.3;
 	}
 
-	reflex bloom when: flip(energy / 1) {
+	reflex bloom when: flip(energy) {
+		
 		stem tmp <- nil;
-		create stem number: 1 {
-			tmp 			<- self;
+		create stem number: 1 returns:child{
 			self.level 		<- myself.level;
 			self.base 		<- myself.base;
 			self.end 		<- self.base;
@@ -145,11 +148,11 @@ species burgeon parent: plant_part
 			self.parent 	<- myself.parent;
 			self.can_split 	<- false;
 			self.is_branch	<- true;
-			
-			if myself.parent != nil {
-				myself.parent.children <- myself.parent.children + tmp;
-			}
+			self.node_rate_appareance 	<- stem(myself.parent).node_rate_appareance;
+			self.acc_node_apperance 	<- stem(myself.parent).acc_node_apperance;
 		}
+		parent.children <+ child[0];
+
 		
 		
 		create leaf {
@@ -177,6 +180,10 @@ species stem parent: plant_part
 	bool 	is_main_stem <- false;
 	bool 	can_split	 <- true;
 	bool 	is_branch	 <- false;
+	int		max_child	 <- rnd(5,15);
+	float 	node_rate_appareance;
+	float	acc_node_apperance <- 0.0;
+	
 	
 
 	aspect default
@@ -188,145 +195,119 @@ species stem parent: plant_part
 	reflex growth
 	{
 		energy 	<- energy + 0.3;
+		point base_2;
 		
 		if !is_branch
-		{
-			//base 	<- parent.end;
-			//end <- parent.base;
+		{ 
 			base <- is_main_stem ? parent.location :parent.end;
 			
 			// Este código es crecimiento 
-			float level_correction <- 1.8 * 0.3 ^ level;
+			float level_correction <- 1.8 * 0.3 ^ level;	
 			length 		<- length > max_stem_length ? length : level_correction * (length_max * (1 - min([1, exp(-energy / 1000)])));
-			//length 		<- level_correction * (length_max * (1 - min([1, exp(-energy / 100)])));
-			width 		<- width > max_width_stem ? width :length / level_correction / 13.0;
+			width 		<- width > max_width_stem ? width : length / level_correction / 13.0;
 			end 		<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};	
-			//base 		<- end - {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
-			//parent.base <- end;
 		}
 		else
 		{
-			base 	<- parent.end;
+			base 	<- {parent.base.x + stem(parent).width/2, parent.base.y + stem(parent).width/2, base.z};
 			length 	<- length > max_branch_length ? length :level_step ^ level * (length_max * (1 - min([1, exp(-energy / 1000)])));
 			width 	<- width > max_width_branch ? width :length / 10 * (4 + max_level - level) / (4 + max_level);
 			end 	<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
 			
+			
+			//save data:[ cycle
+			//		,	2
+			//		,	name
+			//		, 	parent.name
+			//		,	is_main_stem
+			//		,	can_split
+			//		,	is_branch
+			//		,  	energy
+			//		,	level
+			//		,	length
+			//		,	width
+			//		,	base.x
+			//		,	base.y
+			//		,	base.z
+			//		,	end.x
+			//		,	end.y
+			//		,	end.z
+			//] to:"stem_growth_2.csv" format:"csv" rewrite:false;	
 		}
 		
-		
-		//save data:[   	cycle
-		//			,	2
-		//			,	name
-		//			, 	parent.name
-		//			,	is_main_stem
-		//			,	can_split
-		//			,	is_branch
-		//			,  	energy
-		//			,	level
-		//			,	length
-		//			,	width
-		//			,	base.x
-		//			,	base.y
-		//			,	base.z
-		//			,	end.x
-		//			,	end.y
-		//			,	end.z
-		//	] to:"stem_growth.csv" format:"csv" rewrite:false;	
-		 
-			
 	}
 	
 	
 	// Only elements in the main stem can split
-	reflex split when: can_split and (level < max_level) and length > 20.0 //and (min_energy < energy) 
+	reflex split when:can_split and (level < max_level) and (min_energy < energy) and every(#day)
 	{
-		if length(children) = 5
+		if length(children) = max_child
 		{
 			can_split <- false;
+			
+			acc_node_apperance <- acc_node_apperance+node_rate_appareance;
+						
+			// segmento del tallo principal
+			create stem number: 1 {
+				self.level 					<- myself.level + 0.3;
+				self.base					<- myself.base;
+				self.end					<- myself.base;
+				self.alpha 					<- myself.alpha - 10 + rnd(200) / 10;
+				self.beta 					<- myself.beta  - 10 + rnd(200) / 10;
+				self.parent 				<- myself;
+				self.is_main_stem 			<- false;
+				self.acc_node_apperance 	<- myself.acc_node_apperance;
+				self.node_rate_appareance 	<- myself.node_rate_appareance;
+				
+				//save data:[   cycle
+				//			,	2
+				//			,	name
+				//			, 	parent.name
+				//			,	is_main_stem
+				//			,	can_split
+				//			,	is_branch
+				//			,  	energy
+				//			,	level
+				//			,	length
+				//			,	width
+				//			,	base.x
+				//			,	base.y
+				//			,	base.z
+				//			,	end.x
+				//			,	end.y
+				//			,	end.z
+				//			,	acc_node_apperance
+				//] to:"stem_growth_t.csv" format:"csv" rewrite:false;					
+			}
+			
+			
 		}
-		
-		
-		//int possible_burgeon <- rnd(8);
-		//loop i from: 0 to: possible_burgeon
-		//{
-		//	float branch1_alpha	<- rnd(100) / 100 * 360;
-		//	float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
-		//	//if flip(0.7) 
-		//	//{
-		//	//	create burgeon number: 1 {
-		//	//		self.level 	<- myself.level + 2.1;
-		//	//		point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.base.z + myself.length)};
-		//	//		self.base 	<- p_location;//myself.end;
-		//	//		self.end	<- p_location;//myself.end;
-		//	//		self.alpha 	<- branch1_alpha;
-		//	//		self.beta 	<- branch1_beta;
-		//	//		self.parent <- myself;
-		//	//		
-		//	//		
-		//	//		//save data:[   	cycle
-		//	//		//			,	name
-		//	//		//			, 	parent.name
-		//	//		//			,	base.x
-		//	//		//			,	base.y
-		//	//		//			,	base.z
-		//	//		//			,	end.x
-		//	//		//			,	end.y
-		//	//		//			,	end.z
-		//	//		//] to:"burgeon_growth.csv" format:"csv" rewrite:false;
-		//	//		
-		//	//	}
-		//	//}	
-		//} 
-		do create_branch(1);
-		
-		// segmento del tallo principal
-		//create stem number: 1 {
-		//	self.level 			<- myself.level + 0.3;
-		//	self.base			<- myself.base;
-		//	self.end			<- myself.base;
-		//	self.alpha 			<- myself.alpha - 10 + rnd(200) / 10;
-		//	self.beta 			<- myself.beta - 10 + rnd(200) / 10;
-		//	self.parent 		<- myself;
-		//	self.is_main_stem 	<- false;
-		//	//save data:[   	cycle
-		//	//		,	3
-		//	//		,	name
-		//	//		, 	parent.name
-		//	//		,	is_main_stem
-		//	//		,	can_split
-		//	//		,	is_branch
-		//	//		,  	energy
-		//	//		,	level
-		//	//		,	length
-		//	//		,	width
-		//	//		,	base.x
-		//	//		,	base.y
-		//	//		,	base.z
-		//	//		,	end.x
-		//	//		,	end.y
-		//	//		,	end.z
-		//	//] to:"stem_growth.csv" format:"csv" rewrite:false;	
-		//}
+		else if acc_node_apperance = 1.0
+		{
+			do create_branch(1);
+			acc_node_apperance <- 0.0;
+		}
+		else
+		{
+			acc_node_apperance <- acc_node_apperance+node_rate_appareance;
+		}
 	}
+	
 	
 	action create_branch(int number)
 	{
-		loop i from: 0 to: number
-		{
-			float branch1_alpha	<- rnd(100) / 100 * 360;
-			float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
+		float branch1_alpha	<- rnd(100) / 100 * 360;
+		float branch1_beta 	<- 30 + rnd(100) / 100 * 40;
 			
-			create burgeon number: 1 
-			{
-				self.level 	<- myself.level + 1.1;//2.1;
-				point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.end.z)};//myself.base.z + myself.length)};
-				self.base 	<- p_location;//myself.end;
-				self.end	<- p_location;//myself.end;
-				self.alpha 	<- branch1_alpha;
-				self.beta 	<- branch1_beta;
-				self.parent <- myself;
-				self.parent.children <+ myself;		
-			}
+		create burgeon number: 1 returns: child
+		{
+			self.level 	<- myself.level + 1.1;//2.1;
+			point p_location <- {myself.end.x, myself.end.y, rnd(myself.base.z, myself.end.z)};//myself.base.z + myself.length)};
+			self.base 	<- p_location;	
+			self.end	<- p_location;	
+			self.alpha 	<- branch1_alpha;
+			self.beta 	<- branch1_beta;
+			self.parent <- myself;
 		}
 	}
 }
@@ -398,7 +379,7 @@ species leaf
 			//	self.beta 	<- branch1_beta;
 			//	self.parent <- myself.parent;
 			//}
-	
+	        //
 			//create burgeon number: 1 {
 			//	self.level 	<- myself.parent.level + 1.2;
 			//	
@@ -472,7 +453,7 @@ species leaf
 		}
 
 		
-		do die;
+		//do die;  //10/12/2024
 	}
 	
 }
