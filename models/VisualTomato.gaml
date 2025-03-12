@@ -437,6 +437,7 @@ species fruit
 
 experiment tomato_growth type: gui autorun: false {
 	float minimum_cycle_duration <- 0.0005;
+	
 	float seed <- 0.05387546426306633;
 	output {
 		display 'Tomato' type: opengl {//background: #lightskyblue axes: true toolbar: true {
