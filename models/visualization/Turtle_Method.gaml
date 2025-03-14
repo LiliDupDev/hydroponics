@@ -19,7 +19,7 @@ global
 	
 	map<int,string> structure_by_stage;
 	
-	list<plant_part> stack;
+	list<point> stack;
 	int stack_pointer <- 0;
 	
 	init
@@ -31,10 +31,29 @@ global
 			add tomato_structure_by_stage[0,i]::tomato_structure_by_stage[1,i] to:structure_by_stage;
 		}		
 		
-		do draw_plant(1);
+		do push({0,0,0});
+		
+		do draw_plant(2);
 		//write structure_by_stage;
 		
 		
+	}
+	
+	action push(point p)
+	{
+		add p to:stack;
+	}
+	
+	point pop
+	{
+		point p <- last(stack);
+		remove last(stack) from: stack;
+		return p;
+	}
+	
+	point view
+	{
+		return last(stack);
 	}
 	
 	action draw_plant(int stage)
@@ -43,62 +62,87 @@ global
 		
 		float alpha			<- rnd(100) / 100 * 360;
 		float beta 			<- 30 + rnd(100) / 100 * 40;
-		point last_position <- {0,0,0};
+		
 		
 		bool activate_push 	<- false;
+		
 		
 		loop i from: 0 to: length(structure) - 1 
 		{
 			string token <- structure at i;
 			
-			switch token {
-				match "F" 										//	Create main stem
-				{	 						
-					write "STEM";
-				}
-				match "E" 										//	Final branch
-				{
-					
-				}
-				match "X" 										// Branch and leaves to expand
-				{
-					write "FINAL BRANCH";	
-				}
-				match "[" 										// Push in stack
-				{
-					write "ACTIVATE PUSH";
-					activate_push <- true;
-				}
-				match "]" 										// Pop in stack
-				{
-					write "DE-ACTIVATE PUSH";
-					activate_push <- false;
-				}
-				match "+" 										// Positive angle
-				{
-					write "POSITIVE ANGLE";
-				}	
-				match "-" 										// Negative angle
-				{
-					write "NEGATIVE ANGLE";
-				}
-				match "f" 										// Flower
-				{
-					write "FLOWER";
-				}
-				match "x"										// branch 
-				{
-					write "BRANCH";
-				}
-				match "e" 										// branch to expand
-				{
-					write "EXPAND";
-				}
-				match "G"										// Fruit 	
-				{
-					write "FRUIT";
-				}
+			point pointer <- view();
+			
+			if pointer != nil
+			{
+				switch token {
+					match "F" 										//	Create main stem
+					{	
+						create stem
+						{
+							main_stem 	<- true;
+							base 		<- pointer;
+							end	 		<- base + {base.x,base.y,length};
+							pointer 	<- end;
+						}	
+						
+						do push(pointer);
+								
+						write "STEM";
+					}
+					match "E" 										//	Final branch
+					{
+						
+					}
+					match "X" 										// Branch and leaves to expand
+					{
+						create stem
+						{
+							main_stem 	<- false;
+							
+						}
+						write "FINAL BRANCH";	
+					}
+					match "[" 										// Push in stack
+					{
+						write "ACTIVATE PUSH";
+						activate_push <- true;
+					}
+					match "]" 										// Pop in stack
+					{
+						write "DE-ACTIVATE PUSH";
+						activate_push <- false;
+					}
+					match "+" 										// Positive angle
+					{
+						write "POSITIVE ANGLE";
+					}	
+					match "-" 										// Negative angle
+					{
+						alpha 	<- -alpha;
+						beta	<- -beta;
+						write "NEGATIVE ANGLE";
+					}
+					match "f" 										// Flower
+					{
+						write "FLOWER";
+					}
+					match "x"										// branch 
+					{
+						write "BRANCH";
+					}
+					match "e" 										// branch to expand
+					{
+						write "EXPAND";
+					}
+					match "G"										// Fruit 	
+					{
+						write "FRUIT";
+					}
+				}				
 			}
+			
+
 			
 			write token;
 		}
