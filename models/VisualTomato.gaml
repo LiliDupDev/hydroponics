@@ -181,7 +181,7 @@ species stem parent: plant_part
 			
 		}
 		
-		/* 
+		
 		save data:[   	cycle
 					,	name
 					, 	parent.name
@@ -199,7 +199,7 @@ species stem parent: plant_part
 					,	end.y
 					,	end.z
 			] to:"stem_growth.csv" type:csv rewrite:false;	
-		 */
+		 
 			
 	}
 	
