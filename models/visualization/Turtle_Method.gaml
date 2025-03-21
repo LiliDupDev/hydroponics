@@ -349,7 +349,7 @@ species plant_part
 {
 	plant_part 	parent		<- nil;
 	float 		level 		<- 1.0;
-	list 		children	<- nil;
+	list 		children	<- nil; 
 
 	// position
 	point 		base 		<- {0, 0, 0};

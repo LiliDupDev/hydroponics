@@ -177,8 +177,7 @@ species stem parent: plant_part
 			base 	<- parent.end;
 			length 	<- length > max_branch_length ? length :level_step ^ level * (length_max * (1 - min([1, exp(-energy / 1000)])));
 			width 	<- width > max_width_branch ? width :length / 10 * (4 + max_level - level) / (4 + max_level);
-			end 	<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};
-			
+			end 	<- base + {length * cos(beta) * cos(alpha), length * cos(beta) * sin(alpha), length * sin(beta)};	
 		}
 		
 		
@@ -199,7 +198,6 @@ species stem parent: plant_part
 					,	end.y
 					,	end.z
 			] to:"stem_growth.csv" type:csv rewrite:false;	
-		 
 			
 	}
 	
