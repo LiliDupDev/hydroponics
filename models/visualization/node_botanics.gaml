@@ -62,8 +62,9 @@ species tomato_node parent:plant_part
 		pair<float,point> rot_spine <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
 		
 		// End Leaflet
-		pair<float, point> rota <- rotation_composition(beta::{0,1,0}, 45::{0,0,1},-90::{1,0,0});
+		//pair<float, point> rota <- rotation_composition(45::{0,0,1},-90::{1,0,0}); // Cuando todo esta een el origen esta es la rotacion buena
 		//draw f_leaf size: 10 rotate:rota at: end+{0,0,3};
+		pair<float, point> rota <- rotation_composition(rot_spine, 45::{0,0,1},-90::{1,0,0});
 		draw f_leaf size: 10 rotate:rota at: end;
 		
 		// Leaflet 1
