@@ -503,7 +503,7 @@ species tomato_plant
 	
 		do save_var("PLSTN",1,PLSTN);
 			
-		/* 
+		
 		save data:[   cycle
 					, DTFAST
 					, GENR	   
@@ -521,7 +521,7 @@ species tomato_plant
 				    , GPFN
 		] to:"output/ACCUM.csv" type:csv rewrite:false;
 
-		*/
+		
 	}
 	
 	// Computing Minhas water-yield model
@@ -857,11 +857,16 @@ species tomato_plant
 		//do save_var("TPLA",2,TPLA);
 		//do save_var("GENR",1,GENR);
 		//do save_var("PLM2",1,PLM2);
-		//do save_var("RCNL",1,RCNL);
+		do save_var("RCNL",1,RCNL);
 		
 		RCST <- PLM2*GENR;
+		do save_var("RCST",1,RCST);
+		
 		RCNF <- GENR*TABEX(FPN,XFPN,PLSTN-FRLG,10)*PLM2;
 		RCNF <- RCNF*max(1.0-TTH/TTMX,0.0)*max([1.0+TTL/TTMN,0.0]);
+		
+		do save_var("RCNF",1,RCNF);
+		
 		PUSHL<- RDVLV;//*n_L;
 		//do save_var("PUSHL",1,PUSHL);
 		PUSHM<- RDVFR;//*n_F;

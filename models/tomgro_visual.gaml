@@ -177,12 +177,12 @@ species stem parent: plant_part
 {
 	float 	width;
 	float 	length;
-	bool 	is_main_stem <- false;
-	bool 	can_split	 <- true;
-	bool 	is_branch	 <- false;
-	int		max_child	 <- rnd(5,15);
+	bool 	is_main_stem 			<- false;
+	bool 	can_split	 			<- true;
+	bool 	is_branch	 			<- false;
+	int		max_child	 			<- rnd(5,15);
 	float 	node_rate_appareance;
-	float	acc_node_apperance <- 0.0;
+	float	acc_node_apperance 		<- 0.0;
 	
 	
 

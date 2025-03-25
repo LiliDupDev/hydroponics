@@ -25,6 +25,7 @@ global
 	float 	max_width_branch	<- 13.0;
 	
 	float 	min_energy 			<-  1.0;
+	float	branching_energy	<- 	2.1;
 	float	energy_divisor		<- 50.0;
 	float   width_divisor		<- 10.0;
 	
@@ -34,9 +35,22 @@ global
 	
 	float 	scale	 	<- 0.1;
 	
+	float 	current_energy		<- 0.3;
+	
+	
+	// TOMGRO params
+	float 	main_stem_rate  <- 1.0;  	// RCST
+	float	leaf_rate		<- 0.5;		// RCNL
+	float	fruit_rate		<- 0.3;		// RCNF
+	float	first_truss		<- 4.0;		// FTRUSN
+	
+	
+	
 	init
 	{
 		step <- 1#h;
+		
+		
 		
 		create plant_seed number:1 returns:p_seed
 		{
@@ -45,6 +59,7 @@ global
 			level	<- 0.0;
 		}
 		
+		/* 
 		create stem number:1 returns:stm
 		{
 			parent 		<- first(p_seed);
@@ -56,9 +71,15 @@ global
 			is_branch	<- false;
 			beta 		<- 90.0;
 			length		<- 0.0;
-			width		<- 1.0;
+			width		<- 0.0;
+			age			<- 0;
 		}
+		*/
 		
+		create nudo number:1
+		{
+			
+		}
 		
 	}
 }
@@ -87,8 +108,36 @@ species plant_part
 	
 }
 
+
 species plant_seed parent:plant_part
 {
+	
+}
+
+
+species nudo parent: plant_part
+{
+	bool is_truss;
+	
+	int blossom_nodes; // Cuantas flores y posteriormente frutos de desarrollan rand(4-12) sí is_truss=true 
+	
+	
+	aspect default
+	{
+		
+	}
+	/* 
+	 * alpha = 137.5 + gauss(0, 10)
+	 * if edad_hoja < 10_dias:
+		    beta = 15 + gauss(0, 5)  # Hojas jóvenes elevadas
+		else:
+		    beta = -10 + gauss(0, 8)  # Hojas maduras horizontales o caídas
+	
+		# Ej: Mayor estrés hídrico reduce la curvatura (beta menos positivo)
+			beta = beta_base + (tomgro.indice_estres * -5) + gauss(0, 5)
+	 * */
+	
+	
 	
 }
 
@@ -99,14 +148,19 @@ species stem parent: plant_part
 	bool can_split;
 	bool is_branch;
 	
+	int age;
+	
+	
 	aspect default
 	{
 		draw line([base, end], scale*width) color: #green; 
 	}
 
+
 	reflex growth when:every(24#h)
 	{
-		energy 	<- energy + 0.3;
+		age <- age+1;
+		energy 	<- energy + current_energy;
 		
 		if !is_branch
 		{
@@ -121,7 +175,7 @@ species stem parent: plant_part
 									scale*length * sin(beta)
 								  };	
 			
-			write "Day: "+int(cycle/24)+"   - Length: "+length + "    - Width: "+width;
+			
 		}
 		else
 		{
@@ -145,17 +199,22 @@ species stem parent: plant_part
 				self.level 					<- myself.level + 0.3;
 				self.base					<- myself.base;
 				self.end					<- myself.base;
-				self.alpha 					<- 0.0; //myself.alpha - 10 + rnd(200) / 10;
-				self.beta 					<- 90.0;//myself.beta  - 10 + rnd(200) / 10;
+				self.alpha 					<- 0.0; 
+				self.beta 					<- 90.0;
 				self.parent 				<- myself;
 				self.main_stem 				<- false;
 				can_split					<- true;
 				is_branch					<- false;
-		}
-				
+				age							<- 0;
+		}	
 	}
 	
+	
+
+	
 }
+
+
 
 
 experiment drawing type: gui autorun: false 
@@ -171,7 +230,7 @@ experiment drawing type: gui autorun: false
 	output {
 		display 'Turtle' type: opengl {
 			
-			species stem 				aspect: default;
+			//species stem 				aspect: default;
 			
 		}
 			
