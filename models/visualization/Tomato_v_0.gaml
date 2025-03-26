@@ -165,7 +165,7 @@ species stem parent: plant_part
 			base 		<- parent.end;
 			
 			length 		<- length > max_stem_length ? length : level_correction * (length_max * (1 - min([1, exp(-energy / energy_divisor)]))) ;
-			width 		<- width > max_width_stem ? width : length / level_correction / width_divisor ;
+			width 		<- width  > max_width_stem ? width : length / level_correction / width_divisor ;
 			
 			end 		<- base + {	scale*length * cos(beta) * cos(alpha), 
 									scale*length * cos(beta) * sin(alpha), 

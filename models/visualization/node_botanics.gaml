@@ -15,7 +15,7 @@ global
 	
 	float 	width 		<- shape.width;
 	float 	height 		<- shape.height;
-	point 	main_pos 	<- {0,0};//{width / 2, height / 2};
+	point 	main_pos 	<- {width / 2, height / 2};
 	
 	image_file f_leaf <- image_file("../../includes/img/leaf.png");
 	
@@ -23,15 +23,14 @@ global
 	{
 		create tomato_node number:1
 		{
-			alpha 	<- 70 + gauss(0, 45);  //43.41;
-			beta 	<- 15 + gauss(0, 5);   //13.5;
+			alpha 	<- 70 + gauss(0, 45);  
+			beta 	<- 15 + gauss(0, 5);   
 			
 			base 	<- main_pos;
 			end 	<- base + {	spine_length * cos(beta) * cos(alpha), 
 								spine_length * cos(beta) * sin(alpha), 
 								spine_length * sin(beta) 
 							};
-			//end		<- main_pos+{0,0,spine_length};
 		}
 	}
 	
@@ -41,38 +40,37 @@ global
 species tomato_node parent:plant_part
 {
 	bool 	is_truss ;
-	int 	leaflet	  			<- 5;
 	float	spine_length		<- 20.0;
-	float 	leaflet_base_size 	<- 2.0;
+	float 	leaflet_base_size 	<- 1.0;
 	float 	center				<- 0.5;
 	
+	list<bool> ls_visible_leaflet <- [];
 	
-	point leaflet_1_local_position	<- {0.5,0.0,0.0};
+	// Animation attributes
+	float energy_division <- 5.0;
 	
+	//point tangent	<- 	 base update: vector_normalize({cos(beta) * cos(alpha), cos(beta) * sin(alpha), sin(beta)});
 	
 	point radial_dir <-  base update: vector_normalize({ -sin(alpha), cos(alpha), 0});
-	
-	point tangent	<- base update: vector_normalize({cos(beta) * cos(alpha), cos(beta) * sin(alpha), sin(beta)});
-	
 	
 	
 	point	leaflet_1 <- base update: base + {	spine_length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x * 0.5, 
 												spine_length * cos(beta) * sin(alpha) + sin(alpha) - radial_dir.y * 0.5, 
-												spine_length * sin(beta) + radial_dir.z * 2
+												spine_length * sin(beta) 
 											};
 											
-	point	leaflet_2 <- base update: base + {	2*spine_length/3 * cos(beta) * cos(alpha) - radial_dir.x*3, 
-												2*spine_length/3 * cos(beta) * sin(alpha) - radial_dir.y*3, 
+	point	leaflet_2 <- base update: base + {	2*spine_length/3 * cos(beta) * cos(alpha) - radial_dir.x * 3, 
+												2*spine_length/3 * cos(beta) * sin(alpha) - radial_dir.y * 3, 
 												2*spine_length/3 * sin(beta) 
 											};
 											
-	point	leaflet_3 <- base update: base + {	2*spine_length/3 * cos(beta) * cos(alpha) + radial_dir.x*3, 
-												2*spine_length/3 * cos(beta) * sin(alpha) + radial_dir.y*3, 
+	point	leaflet_3 <- base update: base + {	2*spine_length/3 * cos(beta) * cos(alpha) + radial_dir.x * 3, 
+												2*spine_length/3 * cos(beta) * sin(alpha) + radial_dir.y * 3, 
 												2*spine_length/3 * sin(beta) 
 											};
 											
-	point	leaflet_4 <- base update: base + {	spine_length/3 * cos(beta) * cos(alpha) - radial_dir.x*2, 
-												spine_length/3 * cos(beta) * sin(alpha) - radial_dir.y*2, 
+	point	leaflet_4 <- base update: base + {	spine_length/3 * cos(beta) * cos(alpha) - radial_dir.x * 2, 
+												spine_length/3 * cos(beta) * sin(alpha) - radial_dir.y * 2, 
 												spine_length/3 * sin(beta) 
 											};
 											
@@ -84,7 +82,7 @@ species tomato_node parent:plant_part
 	
 	float vector_magnitude(point a)
 	{
-		return sqrt(a.x^2+a.y^2+a.z^2);
+		return sqrt(a.x^2 + a.y^2 + a.z^2);
 	}
 	
 	point vector_normalize(point a)
@@ -96,13 +94,13 @@ species tomato_node parent:plant_part
 	
 	aspect default
 	{
-		
-		// Spine
-		draw line([base, end], 1) color: #green;
+	// Spine
+		draw line([base, end], leaflet_base_size) color: #green;
 		
 		pair<float,point> rot_spine <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
 		pair<float,point> rot_leaflet_1 <- 45::{0,0,1};
 		
+	// Leaflets 
 		pair<float, point> rota <- rotation_composition(rot_leaflet_1, rot_spine, 90::{0,0,1} , 15::{0,1,0});
 		
 		draw f_leaf size: 10 rotate:rota at: leaflet_1;
