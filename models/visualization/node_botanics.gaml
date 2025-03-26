@@ -46,16 +46,19 @@ species tomato_node parent:plant_part
 	float 	leaflet_base_size 	<- 2.0;
 	float 	center				<- 0.5;
 	
-	//map<string,float> leaflet_size <- {"leaflet_1"::2.0,"leaflet_2"::2.0,"leaflet_3"::2.0};
+	
+	point leaflet_1_local_position	<- {0.5,0.0,0.0};
+	
+	
 	point radial_dir <-  base update: vector_normalize({ -sin(alpha), cos(alpha), 0});
 	
 	point tangent	<- base update: vector_normalize({cos(beta) * cos(alpha), cos(beta) * sin(alpha), sin(beta)});
 	
 	
 	
-	point	leaflet_1 <- base update: base + {	spine_length * cos(beta) * cos(alpha) + cos(alpha) , 
-												spine_length * cos(beta) * sin(alpha) + sin(alpha) , 
-												spine_length * sin(beta) 
+	point	leaflet_1 <- base update: base + {	spine_length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x * 0.5, 
+												spine_length * cos(beta) * sin(alpha) + sin(alpha) - radial_dir.y * 0.5, 
+												spine_length * sin(beta) + radial_dir.z * 2
 											};
 											
 	point	leaflet_2 <- base update: base + {	2*spine_length/3 * cos(beta) * cos(alpha) - radial_dir.x*3, 
@@ -98,16 +101,11 @@ species tomato_node parent:plant_part
 		draw line([base, end], 1) color: #green;
 		
 		pair<float,point> rot_spine <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
+		pair<float,point> rot_leaflet_1 <- 45::{0,0,1};
 		
+		pair<float, point> rota <- rotation_composition(rot_leaflet_1, rot_spine, 90::{0,0,1} , 15::{0,1,0});
 		
-		//pair<float, point> rota <- rotation_composition(45::{0,0,1},-90::{1,0,0}); // Cuando todo esta een el origen esta es la rotacion buena
-		//draw f_leaf size: 10 rotate:rota at: end+{0,0,3};
-		
-		// Este es el código para una hoja rota a 45 en beta
-		// End Leaflet
-		pair<float, point> rota <- rotation_composition(rot_spine, alpha+beta+60::{0,0,1}, beta::{0,1,0});
 		draw f_leaf size: 10 rotate:rota at: leaflet_1;
-		
 		
 		rota <- rotation_composition(rot_spine,  90::{0,0,1}, beta::{0,1,0}); 
 		draw f_leaf size: 9 rotate: rota at: leaflet_2;
@@ -120,31 +118,6 @@ species tomato_node parent:plant_part
 		
 		rota <- rotation_composition(rot_spine, 180::{0,0,1}, beta::{0,1,0});
 		draw f_leaf size: 8 rotate: rota at: leaflet_5;
-		
-		
-		//pair<float, point> rota <- rotation_composition(rot_spine, 45::{0,0,1},-90::{1,0,0});
-		//draw f_leaf size: 10 rotate:rota at: end;
-		
-		//pair<float, point> rota <- rotation_composition(135::{0,0,1}, 45::{0,1,0});
-		//draw f_leaf size: 10 rotate:rota at: base;
-		
-		// Leaflet 1
-		//rota <- rotation_composition(rot_spine,-90::{1,0,0});
-		//draw f_leaf size: 8 rotate:rota at: end-{3,0,5};
-		//
-		//// Leaflet 3
-		//rota <- rotation_composition(rot_spine,-90::{1,0,0},-180::{0,0,1});
-		//draw f_leaf size: 8 rotate:rota at: end+{3,0,-5};
-		//
-		//// Leaflet 4
-		//rota <- rotation_composition(rot_spine,-90::{1,0,0});
-		//draw f_leaf size: 7 rotate:-90::{1,0,0} at: end-{3,0,12};
-		//
-		//// Leaflet 5
-		//rota <- rotation_composition(rot_spine,-90::{1,0,0},-180::{0,0,1});
-		//draw f_leaf size: 7 rotate:rota at: end+{3,0,-12 };
-		
-		//draw triangle(2) rotate: rota at: end color: #lime;
 	}
 }
 
