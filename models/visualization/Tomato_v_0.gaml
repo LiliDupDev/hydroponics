@@ -59,7 +59,7 @@ global
 			level	<- 0.0;
 		}
 		
-		/* 
+		
 		create stem number:1 returns:stm
 		{
 			parent 		<- first(p_seed);
@@ -74,12 +74,9 @@ global
 			width		<- 0.0;
 			age			<- 0;
 		}
-		*/
 		
-		create nudo number:1
-		{
-			
-		}
+		
+	
 		
 	}
 }
@@ -230,7 +227,7 @@ experiment drawing type: gui autorun: false
 	output {
 		display 'Turtle' type: opengl {
 			
-			//species stem 				aspect: default;
+			species stem 				aspect: default;
 			
 		}
 			
