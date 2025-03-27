@@ -11,7 +11,7 @@ model nodebotanics
 global
 {
 	geometry shape 	<- 	rectangle(50,50);
-	float scale 	<-	0.1;
+	float 	 scale 	<-	0.1;
 	
 	float 	width 		<- shape.width;
 	float 	height 		<- shape.height;
@@ -21,15 +21,20 @@ global
 	
 	init
 	{
+		step <- 1#h;
+		
 		create tomato_node number:1
 		{
 			alpha 	<- 70 + gauss(0, 45);  
 			beta 	<- 15 + gauss(0, 5);   
+			length	<- 0.0;
+			width	<- 1.0;
+			level	<- 1.3;
 			
 			base 	<- main_pos;
-			end 	<- base + {	spine_length * cos(beta) * cos(alpha), 
-								spine_length * cos(beta) * sin(alpha), 
-								spine_length * sin(beta) 
+			end 	<- base + {	length * cos(beta) * cos(alpha), 
+								length * cos(beta) * sin(alpha), 
+								length * sin(beta) 
 							};
 		}
 	}
@@ -40,11 +45,19 @@ global
 species tomato_node parent:plant_part
 {
 	bool 	is_truss ;
-	float	spine_length		<- 20.0;
 	float 	leaflet_base_size 	<- 1.0;
 	float 	center				<- 0.5;
 	
-	list<bool> ls_visible_leaflet <- [];
+	float	max_length			<- 260.0;
+	float	energy_divisor		<- 5.0;
+	
+	
+	float 				leaflet_energy_divisor	<- 2.5;
+	map<string,int> 	leaflet_current_size 	<- ["leaflet_1":: 0  ,"leaflet_2":: 0  ,"leaflet_3":: 0  ,"leaflet_4":: 0  ,"leaflet_5":: 0 ];
+	map<string,float> 	leaflet_max_size 		<- ["leaflet_1"::10.0,"leaflet_2":: 9.0,"leaflet_3":: 9.0,"leaflet_4":: 8.0,"leaflet_5"::8.0];
+	map<string,float>	leaflet_energy_delay	<- ["leaflet_1":: 0.6,"leaflet_2":: 2.3,"leaflet_3":: 2.6,"leaflet_4":: 3.6,"leaflet_5"::4.2];
+	
+	
 	
 	// Animation attributes
 	float energy_division <- 5.0;
@@ -54,29 +67,29 @@ species tomato_node parent:plant_part
 	point radial_dir <-  base update: vector_normalize({ -sin(alpha), cos(alpha), 0});
 	
 	
-	point	leaflet_1 <- base update: base + {	spine_length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x * 0.5, 
-												spine_length * cos(beta) * sin(alpha) + sin(alpha) - radial_dir.y * 0.5, 
-												spine_length * sin(beta) 
+	point	leaflet_1 <- base update: base + {	scale*length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x ,//* 0.5, 
+												scale*length * cos(beta) * sin(alpha) + sin(alpha) - radial_dir.y ,//* 0.5, 
+												scale*length * sin(beta) 
 											};
 											
-	point	leaflet_2 <- base update: base + {	2*spine_length/3 * cos(beta) * cos(alpha) - radial_dir.x * 3, 
-												2*spine_length/3 * cos(beta) * sin(alpha) - radial_dir.y * 3, 
-												2*spine_length/3 * sin(beta) 
+	point	leaflet_2 <- base update: base + {	2/3*scale*length * cos(beta) * cos(alpha) - radial_dir.x ,//* 3, 
+												2/3*scale*length * cos(beta) * sin(alpha) - radial_dir.y ,//* 3, 
+												2/3*scale*length * sin(beta)                             
 											};
 											
-	point	leaflet_3 <- base update: base + {	2*spine_length/3 * cos(beta) * cos(alpha) + radial_dir.x * 3, 
-												2*spine_length/3 * cos(beta) * sin(alpha) + radial_dir.y * 3, 
-												2*spine_length/3 * sin(beta) 
+	point	leaflet_3 <- base update: base + {	2/3*scale*length * cos(beta) * cos(alpha) + radial_dir.x ,//* 3, 
+												2/3*scale*length * cos(beta) * sin(alpha) + radial_dir.y ,//* 3, 
+												2/3*scale*length * sin(beta) 
 											};
 											
-	point	leaflet_4 <- base update: base + {	spine_length/3 * cos(beta) * cos(alpha) - radial_dir.x * 2, 
-												spine_length/3 * cos(beta) * sin(alpha) - radial_dir.y * 2, 
-												spine_length/3 * sin(beta) 
+	point	leaflet_4 <- base update: base + {	scale*length/3 * cos(beta) * cos(alpha) - radial_dir.x ,//* 2, 
+												scale*length/3 * cos(beta) * sin(alpha) - radial_dir.y ,//* 2, 
+												scale*length/3 * sin(beta) 
 											};
 											
-	point	leaflet_5 <- base update: base + {	spine_length/3 * cos(beta) * cos(alpha) + radial_dir.x*2, 
-												spine_length/3 * cos(beta) * sin(alpha) + radial_dir.y*2, 
-												spine_length/3 * sin(beta) 
+	point	leaflet_5 <- base update: base + {	scale*length/3 * cos(beta) * cos(alpha) + radial_dir.x,//*2, 
+												scale*length/3 * cos(beta) * sin(alpha) + radial_dir.y,//*2, 
+												scale*length/3 * sin(beta) 
 											};
 	
 	
@@ -92,6 +105,37 @@ species tomato_node parent:plant_part
 	}
 	
 	
+	reflex growth when:every(24#h)
+	{
+		write "BASE:  "		+base;
+		write "END:  "		+end;
+		write "LEAFLET 1:  "+leaflet_1;
+		write "LEAFLET 2:  "+leaflet_2;
+		write "---------------------------------";
+		
+		energy <- energy + 0.3;
+		float level_correction <- 1.8 * 0.3 ^ level;
+		//base 		<- parent.end;
+			
+		// Spine growth
+		length 		<- length > max_length ? length : level_correction * (max_length * (1 - min([1, exp(-energy / energy_divisor)]))) ;
+		width 		<- 1.0;//width  > max_width_stem ? width : length / level_correction / width_divisor ;
+			
+		end 		<- base + {	scale* length * cos(beta) * cos(alpha), 
+								scale* length * cos(beta) * sin(alpha), 
+								scale* length * sin(beta)
+							  };	
+							  
+		// Leaflet growth
+		float energy_efficiency <- 0.0;
+		loop key over: leaflet_current_size.keys {
+			energy_efficiency 			<- max(0 , energy-leaflet_energy_delay[key]);
+			leaflet_current_size[key] 	<- leaflet_max_size[key] * (1 - exp( -energy_efficiency/leaflet_energy_divisor ) );
+		}
+		 
+							  
+	}
+	
 	aspect default
 	{
 	// Spine
@@ -103,20 +147,21 @@ species tomato_node parent:plant_part
 	// Leaflets 
 		pair<float, point> rota <- rotation_composition(rot_leaflet_1, rot_spine, 90::{0,0,1} , 15::{0,1,0});
 		
-		draw f_leaf size: 10 rotate:rota at: leaflet_1;
+		draw f_leaf size: leaflet_current_size["leaflet_1"] rotate:rota  at: leaflet_1;
 		
 		rota <- rotation_composition(rot_spine,  90::{0,0,1}, beta::{0,1,0}); 
-		draw f_leaf size: 9 rotate: rota at: leaflet_2;
+		draw f_leaf size: leaflet_current_size["leaflet_2"] rotate: rota at: leaflet_2;
 		
 		rota <- rotation_composition(rot_spine, 180::{0,0,1}, beta::{0,1,0});
-		draw f_leaf size: 9 rotate: rota at: leaflet_3;
+		draw f_leaf size: leaflet_current_size["leaflet_3"] rotate: rota at: leaflet_3;
 		
 		rota <- rotation_composition(rot_spine,  90::{0,0,1}, beta::{0,1,0});  
-		draw f_leaf size: 8 rotate: rota at: leaflet_4;
+		draw f_leaf size: leaflet_current_size["leaflet_4"] rotate: rota at: leaflet_4;
 		
 		rota <- rotation_composition(rot_spine, 180::{0,0,1}, beta::{0,1,0});
-		draw f_leaf size: 8 rotate: rota at: leaflet_5;
+		draw f_leaf size: leaflet_current_size["leaflet_5"] rotate: rota at: leaflet_5;
 	}
+	
 }
 
 
