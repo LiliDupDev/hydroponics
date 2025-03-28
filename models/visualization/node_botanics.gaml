@@ -23,26 +23,51 @@ global
 	{
 		step <- 1#h;
 		
-		create tomato_node number:1
+		create tomato_truss number:1
 		{
-			alpha 	<- 70 + gauss(0, 45);  
-			beta 	<- 15 + gauss(0, 5);   
-			length	<- 0.0;
-			width	<- 1.0;
-			level	<- 1.3;
+			base <- {0,0,0};
 			
-			base 	<- main_pos;
-			end 	<- base + {	length * cos(beta) * cos(alpha), 
-								length * cos(beta) * sin(alpha), 
-								length * sin(beta) 
-							};
 		}
+		//create tomato_leaf number:1
+		//{
+		//	alpha 	<- -70 + gauss(0, 45);  
+		//	beta 	<-  15 + gauss(0, 5);   
+		//	length	<- 0.0;
+		//	width	<- 1.0;
+		//	level	<- 1.3;
+		//	
+		//	base 	<- main_pos;
+		//	end 	<- base + {	scale * length * cos(beta) * cos(alpha), 
+		//						scale * length * cos(beta) * sin(alpha), 
+		//						scale * length * sin(beta) 
+		//					};
+		//}
 	}
 	
 }
 
 
-species tomato_node parent:plant_part
+species tomato_truss parent:plant_part
+{
+	float radius <- 0.5;
+	
+	
+	aspect default
+	{   
+		draw line([{0,0,0}, {0,0,2.0}], 0.5) color: #green; 
+		//draw line([{0,0,0}, {1.2,0,0}], 0.1) color: #green;                                                       
+		//draw sphere(0.2) at:{ 1.2 ,  0.0 , 0.0 } color:#yellow ;
+		//draw sphere(0.2) at:{-0.6 ,  1.04, 0.4 } color:#yellow ;
+		//draw sphere(0.2) at:{-1.1 , -0.3 , 0.8 } color:#yellow ;
+		//draw sphere(0.2) at:{ 0.3 , -1.15, 1.2 } color:#yellow ;
+		//draw sphere(0.2) at:{ 1.15,  0.5 , 1.6 } color:#yellow ;
+		//draw sphere(0.2) at:{-0.45,  1.1 , 2.0 } color:#yellow ;
+	}                 
+}
+
+
+
+species tomato_leaf parent:plant_part
 {
 	bool 	is_truss ;
 	float 	center				<- 0.5;
@@ -61,7 +86,7 @@ species tomato_node parent:plant_part
 	point radial_dir <-  base update: vector_normalize({ -sin(alpha), cos(alpha), 0});
 	
 	
-	point	leaflet_1 <- base update: base + {	scale*length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x * leaflet_current_size["leaflet_1"]/10 + width,
+	point	leaflet_1 <- base update: base + {	scale*length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x * leaflet_current_size["leaflet_1"]/10 + (alpha < 0 ? -width : width),
 												scale*length * cos(beta) * sin(alpha) + sin(alpha) + radial_dir.y * leaflet_current_size["leaflet_1"]/15 , 
 												scale*length * sin(beta) 
 											};
@@ -152,6 +177,8 @@ species tomato_node parent:plant_part
 }
 
 
+
+
 species plant_part
 {
 	plant_part 	parent		<- nil;
@@ -177,8 +204,9 @@ experiment drawing type: gui autorun: false
 	
 	// Screen
 	output {
-		display 'Leaf' type: opengl {
-			species tomato_node;
+		display 'Truss' type: opengl {
+			//species tomato_leaf;
+			species tomato_truss;
 		}
 			
 			
