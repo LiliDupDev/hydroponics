@@ -45,50 +45,44 @@ global
 species tomato_node parent:plant_part
 {
 	bool 	is_truss ;
-	float 	leaflet_base_size 	<- 1.0;
 	float 	center				<- 0.5;
 	
 	float	max_length			<- 260.0;
 	float	energy_divisor		<- 5.0;
-	
-	
-	float 				leaflet_energy_divisor	<- 2.5;
-	map<string,int> 	leaflet_current_size 	<- ["leaflet_1":: 0  ,"leaflet_2":: 0  ,"leaflet_3":: 0  ,"leaflet_4":: 0  ,"leaflet_5":: 0 ];
-	map<string,float> 	leaflet_max_size 		<- ["leaflet_1"::10.0,"leaflet_2":: 9.0,"leaflet_3":: 9.0,"leaflet_4":: 8.0,"leaflet_5"::8.0];
-	map<string,float>	leaflet_energy_delay	<- ["leaflet_1":: 0.6,"leaflet_2":: 2.3,"leaflet_3":: 2.6,"leaflet_4":: 3.6,"leaflet_5"::4.2];
-	
-	
+	float 	level_correction 	<- 1.8 * 0.3 ^ level;
 	
 	// Animation attributes
-	float energy_division <- 5.0;
+	float 				leaflet_energy_divisor	<- 2.5;
+	map<string,int> 	leaflet_current_size 	<- ["leaflet_1":: 0  ,"leaflet_2":: 0  ,"leaflet_3":: 0  ,"leaflet_4":: 0  ,"leaflet_5":: 0  ];
+	map<string,float> 	leaflet_max_size 		<- ["leaflet_1":: 7.0,"leaflet_2":: 5.0,"leaflet_3":: 5.0,"leaflet_4":: 4.0,"leaflet_5":: 4.0];
+	map<string,float>	leaflet_energy_delay	<- ["leaflet_1":: 0.6,"leaflet_2":: 2.3,"leaflet_3":: 2.9,"leaflet_4":: 4.5,"leaflet_5":: 3.6];
 	
-	//point tangent	<- 	 base update: vector_normalize({cos(beta) * cos(alpha), cos(beta) * sin(alpha), sin(beta)});
 	
 	point radial_dir <-  base update: vector_normalize({ -sin(alpha), cos(alpha), 0});
 	
 	
-	point	leaflet_1 <- base update: base + {	scale*length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x ,//* 0.5, 
-												scale*length * cos(beta) * sin(alpha) + sin(alpha) - radial_dir.y ,//* 0.5, 
+	point	leaflet_1 <- base update: base + {	scale*length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x * leaflet_current_size["leaflet_1"]/10 + width,
+												scale*length * cos(beta) * sin(alpha) + sin(alpha) + radial_dir.y * leaflet_current_size["leaflet_1"]/15 , 
 												scale*length * sin(beta) 
 											};
 											
-	point	leaflet_2 <- base update: base + {	2/3*scale*length * cos(beta) * cos(alpha) - radial_dir.x ,//* 3, 
-												2/3*scale*length * cos(beta) * sin(alpha) - radial_dir.y ,//* 3, 
+	point	leaflet_2 <- base update: base + {	2/3*scale*length * cos(beta) * cos(alpha) - radial_dir.x * leaflet_current_size["leaflet_2"]/4,
+												2/3*scale*length * cos(beta) * sin(alpha) - radial_dir.y * leaflet_current_size["leaflet_2"]/4,
 												2/3*scale*length * sin(beta)                             
 											};
 											
-	point	leaflet_3 <- base update: base + {	2/3*scale*length * cos(beta) * cos(alpha) + radial_dir.x ,//* 3, 
-												2/3*scale*length * cos(beta) * sin(alpha) + radial_dir.y ,//* 3, 
+	point	leaflet_3 <- base update: base + {	2/3*scale*length * cos(beta) * cos(alpha) + radial_dir.x * leaflet_current_size["leaflet_3"]/4, 
+												2/3*scale*length * cos(beta) * sin(alpha) + radial_dir.y * leaflet_current_size["leaflet_3"]/4, 
 												2/3*scale*length * sin(beta) 
 											};
 											
-	point	leaflet_4 <- base update: base + {	scale*length/3 * cos(beta) * cos(alpha) - radial_dir.x ,//* 2, 
-												scale*length/3 * cos(beta) * sin(alpha) - radial_dir.y ,//* 2, 
+	point	leaflet_4 <- base update: base + {	scale*length/3 * cos(beta) * cos(alpha) - radial_dir.x * leaflet_current_size["leaflet_4"]/4,
+												scale*length/3 * cos(beta) * sin(alpha) - radial_dir.y * leaflet_current_size["leaflet_4"]/4,
 												scale*length/3 * sin(beta) 
 											};
 											
-	point	leaflet_5 <- base update: base + {	scale*length/3 * cos(beta) * cos(alpha) + radial_dir.x,//*2, 
-												scale*length/3 * cos(beta) * sin(alpha) + radial_dir.y,//*2, 
+	point	leaflet_5 <- base update: base + {	scale*length/3 * cos(beta) * cos(alpha) + radial_dir.x * leaflet_current_size["leaflet_5"]/4, 
+												scale*length/3 * cos(beta) * sin(alpha) + radial_dir.y * leaflet_current_size["leaflet_5"]/4, 
 												scale*length/3 * sin(beta) 
 											};
 	
@@ -107,17 +101,11 @@ species tomato_node parent:plant_part
 	
 	reflex growth when:every(24#h)
 	{
-		write "BASE:  "		+base;
-		write "END:  "		+end;
-		write "LEAFLET 1:  "+leaflet_1;
-		write "LEAFLET 2:  "+leaflet_2;
-		write "---------------------------------";
 		
 		energy <- energy + 0.3;
-		float level_correction <- 1.8 * 0.3 ^ level;
 		//base 		<- parent.end;
 			
-		// Spine growth
+	// Spine growth
 		length 		<- length > max_length ? length : level_correction * (max_length * (1 - min([1, exp(-energy / energy_divisor)]))) ;
 		width 		<- 1.0;//width  > max_width_stem ? width : length / level_correction / width_divisor ;
 			
@@ -126,26 +114,25 @@ species tomato_node parent:plant_part
 								scale* length * sin(beta)
 							  };	
 							  
-		// Leaflet growth
+	// Leaflet growth
 		float energy_efficiency <- 0.0;
 		loop key over: leaflet_current_size.keys {
 			energy_efficiency 			<- max(0 , energy-leaflet_energy_delay[key]);
 			leaflet_current_size[key] 	<- leaflet_max_size[key] * (1 - exp( -energy_efficiency/leaflet_energy_divisor ) );
 		}
-		 
-							  
+		 				  
 	}
 	
 	aspect default
 	{
 	// Spine
-		draw line([base, end], leaflet_base_size) color: #green;
+		draw line([base, end], width) color: #green;
 		
 		pair<float,point> rot_spine <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
 		pair<float,point> rot_leaflet_1 <- 45::{0,0,1};
 		
 	// Leaflets 
-		pair<float, point> rota <- rotation_composition(rot_leaflet_1, rot_spine, 90::{0,0,1} , 15::{0,1,0});
+		pair<float, point> rota <- rotation_composition(rot_leaflet_1, rot_spine, 90::{0,0,1});//, 15::{0,1,0});
 		
 		draw f_leaf size: leaflet_current_size["leaflet_1"] rotate:rota  at: leaflet_1;
 		
