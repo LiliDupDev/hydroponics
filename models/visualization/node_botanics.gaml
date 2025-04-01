@@ -25,8 +25,21 @@ global
 		
 		create tomato_truss number:1
 		{
-			base <- {0,0,0};
+			base 	<- {0,0,0};
+			length 	<- 10.0;
+			alpha	<- 137.5 + gauss(0,10);
+			beta 	<- 35.0 + gauss(0,5); 		// TODO: change beta to simulate weight inclination
+												// Hanging trusses require beta 60 to 90°
+												// Upright trusses require an angle of 10 to 20°
+			width	<- 1.0;
+			level	<- 1.3;
 			
+			end 	<- base + {	length * cos(beta) * cos(alpha), 
+								length * cos(beta) * sin(alpha), 
+								length * sin(beta) 
+							};
+			
+			do draw_pedicel;
 		}
 		//create tomato_leaf number:1
 		//{
@@ -49,12 +62,160 @@ global
 
 species tomato_truss parent:plant_part
 {
-	float radius <- 0.5;
+	float 	radius 				<- 0.5;
+	int 	fruit_number 		<- rnd(5,8);
+	float	phyllotaxy_angle	<- 137.5;
+	float	inclination_angle	<- 25.0; //20-40
+	float 	pedicel_length		<- 3.0;
 	
+	map<string,point> pedicel_base	<-[];
+	map<string,point> pedicel_end	<-[];
+	map<string,float> pedicel_alpha	<-[];
+	map<string,float> pedicel_beta	<-[];
+	
+	action draw_pedicel
+	{
+		string 	nm 				<- "";
+		float	beta_pedicel	<- 0.0;
+		float	alpha_pedicel	<- 0.0;
+		float	z_pedicel		<- 0.0;
+		
+		point 	pedicel_local;
+		point 	pedicel_global;
+		point 	pedicel_global_end;
+		point	direction;
+		
+		
+		loop id from: 0 to: fruit_number - 1
+		{
+			nm 			<- "pedicel_"+id;
+			z_pedicel	<- (id/fruit_number) * length; // position on peduncle
+			alpha_pedicel  	<- id *  phyllotaxy_angle;
+			beta_pedicel	<- inclination_angle;
+			
+			// Local radial position, no peduncle rotation
+			//pedicel_local <- {
+			//					radius * cos(alpha_pedicel) * sin(beta_pedicel),
+			//					radius * sin(alpha_pedicel) * sin(beta_pedicel),
+			//					z_pedicel + radius * cos(beta_pedicel)
+			//					};
+						
+			// Appliying peduncle rotation
+			//pedicel_global <- {
+			//					pedicel_local.x * cos(alpha) - pedicel_local.y * sin(alpha),
+			//					pedicel_local.x * sin(alpha) + pedicel_local.y * cos(alpha),
+			//					pedicel_local.z
+			//					};
+			//					
+			//pedicel_global_end <-{
+			//						pedicel_global.x + pedicel_length * cos(alpha) * sin(beta),
+			//						pedicel_global.x + pedicel_length * sin(alpha) * sin(beta),
+			//						pedicel_global.z + pedicel_length * cos(beta)
+			//					};
+			//
+			//add nm::pedicel_global+base to: pedicel_base	;
+			//add nm::pedicel_global_end 	to: pedicel_end	    ;
+			//add nm::alpha_pedicel 		to: pedicel_alpha	;
+			//add nm::beta_pedicel 		to: pedicel_beta	;
+			
+				
+			pedicel_local <- { 
+								base.x,
+								base.y,
+								base.z + z_pedicel
+							};
+			
+			direction	<- apply_rotation({1,0,0}  , {0,0,1}, alpha_pedicel);
+			direction	<- apply_rotation(direction, {0,1,0}, beta_pedicel);
+			
+			pedicel_global_end <- {
+									pedicel_local.x * direction.x * 3,
+									pedicel_local.y * direction.y * 3,
+									pedicel_local.z * direction.z * 3
+									};
+									
+			add nm::pedicel_local 		to: pedicel_base;
+			add nm::pedicel_global_end 	to: pedicel_end	;
+			
+		} 
+	}
+	
+	
+	// Rodrigus Rotation
+	point apply_rotation(point vector, point axis, float theta)
+	{
+		point k <- vector_normalize(axis);	
+		
+		point term_1 <- {
+						 vector.x * cos(theta) ,
+						 vector.y * cos(theta) ,
+						 vector.z * cos(theta)		
+						};
+						
+		point cross <- cross_product(k,vector);
+		
+		point term_2 <- {
+						 cross.x * sin(theta) , 
+						 cross.y * sin(theta) , 
+						 cross.z * sin(theta) 
+						};
+		float scalar <- dot_product(k,vector) * (1-cos(theta));
+		
+		point term_3 <- {
+						 k.x * scalar,
+						 k.y * scalar,
+						 k.z * scalar
+						};
+		
+		return {
+				term_1.x + term_2.x + term_3.x , 
+				term_1.y + term_2.y + term_3.y ,
+				term_1.z + term_2.z + term_3.z 
+				};			
+	}
+	
+	
+	point cross_product(point k, point v)
+	{
+		return {
+				 k.y * v.z - k.z * v.y ,
+				 k.z * v.x - k.z * v.z ,
+				 k.x * v.y - k.y * v.x
+				};
+	}
+	
+	
+	float dot_product(point k, point v)
+	{
+		return k.x * v.x + k.y * v.y + k.z * v.z;
+	}
+	
+	
+	float vector_magnitude(point a) 
+	{
+		return sqrt(a.x^2 + a.y^2 + a.z^2);
+	}
+	
+	
+	point vector_normalize(point a)
+	{
+		float magnitude <- vector_magnitude(a);
+		return {a.x/magnitude, a.y/magnitude, a.z/magnitude};
+	}
 	
 	aspect default
 	{   
-		draw line([{0,0,0}, {0,0,2.0}], 0.5) color: #green; 
+		draw line([base, end], width) color: #green;
+		pair<float,point> rot_peduncle <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
+		pair<float,point> rot_pedicel;// <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
+		
+		loop key over: pedicel_base.keys
+		{
+			//rot_pedicel <- rotation_composition(rot_peduncle, pedicel_alpha[key]::{0,0,1}, pedicel_beta::{1,0,0});
+			draw line([pedicel_base[key], pedicel_end[key]], radius) color: #green; 
+		} 
+		
+		
 		//draw line([{0,0,0}, {1.2,0,0}], 0.1) color: #green;                                                       
 		//draw sphere(0.2) at:{ 1.2 ,  0.0 , 0.0 } color:#yellow ;
 		//draw sphere(0.2) at:{-0.6 ,  1.04, 0.4 } color:#yellow ;
@@ -83,7 +244,7 @@ species tomato_leaf parent:plant_part
 	map<string,float>	leaflet_energy_delay	<- ["leaflet_1":: 0.6,"leaflet_2":: 2.3,"leaflet_3":: 2.9,"leaflet_4":: 4.5,"leaflet_5":: 3.6];
 	
 	
-	point radial_dir <-  base update: vector_normalize({ -sin(alpha), cos(alpha), 0});
+	point 	radial_dir<-  base update: vector_normalize({ -sin(alpha), cos(alpha), 0});
 	
 	
 	point	leaflet_1 <- base update: base + {	scale*length * cos(beta) * cos(alpha) + cos(alpha) + radial_dir.x * leaflet_current_size["leaflet_1"]/10 + (alpha < 0 ? -width : width),
@@ -199,7 +360,7 @@ species plant_part
 	float 		level 	<- 1.0;
 }
 
-experiment drawing type: gui autorun: false 
+experiment drawing type: gui autorun: false  
 {	
 	
 	// Screen
