@@ -66,7 +66,7 @@ species tomato_truss parent:plant_part
 	int 	fruit_number 		<- rnd(5,8);
 	float	phyllotaxy_angle	<- 137.5;
 	float	inclination_angle	<- 25.0; //20-40
-	float 	pedicel_length		<- 3.0;
+	float 	pedicel_length		<- 5.0;
 	
 	map<string,point> pedicel_base	<-[];
 	map<string,point> pedicel_end	<-[];
@@ -76,102 +76,61 @@ species tomato_truss parent:plant_part
 	action draw_pedicel
 	{
 		string 	nm 				<- "";
+		float 	t				<- 0.0;
 		float	beta_pedicel	<- 0.0;
 		float	alpha_pedicel	<- 0.0;
-		float	z_pedicel		<- 0.0;
 		
-		point 	pedicel_local;
-		point 	pedicel_global;
-		point 	pedicel_global_end;
-		point	direction;
+		point	pos_pedicel_base;
+		point	direction_local;
+		point	direction_global;
+		point	pos_flower;
+		
+		
+		// Compute ortogonal axis to penducle
+		point 	peduncle_vector <- end - base;
+		point 	peduncle_dir 	<- vector_normalize(peduncle_vector);
+		point	world_up		<- {0,0,1};
+		
+		// Right axis of peduncle
+		point peduncle_right 	<- vector_normalize(cross_product(peduncle_dir, world_up));
+		
+		// Upward axis of peduncle
+		point peduncle_up 		<- vector_normalize(cross_product(peduncle_right, peduncle_dir));
 		
 		
 		loop id from: 0 to: fruit_number - 1
 		{
-			nm 			<- "pedicel_"+id;
-			z_pedicel	<- (id/fruit_number) * length; // position on peduncle
+			nm 					<- "pedicel_"+id;
+			
+			// Position along peduncle
+			t					<- id / fruit_number; 
+			pos_pedicel_base 	<- base + peduncle_dir * (t*length);
+			
+			// Radial direction of pedicel (local system of penducle)
 			alpha_pedicel  	<- id *  phyllotaxy_angle;
-			beta_pedicel	<- inclination_angle;
+			beta_pedicel	<- 20.0 ;//inclination_angle;
 			
-			// Local radial position, no peduncle rotation
-			//pedicel_local <- {
-			//					radius * cos(alpha_pedicel) * sin(beta_pedicel),
-			//					radius * sin(alpha_pedicel) * sin(beta_pedicel),
-			//					z_pedicel + radius * cos(beta_pedicel)
-			//					};
-						
-			// Appliying peduncle rotation
-			//pedicel_global <- {
-			//					pedicel_local.x * cos(alpha) - pedicel_local.y * sin(alpha),
-			//					pedicel_local.x * sin(alpha) + pedicel_local.y * cos(alpha),
-			//					pedicel_local.z
-			//					};
-			//					
-			//pedicel_global_end <-{
-			//						pedicel_global.x + pedicel_length * cos(alpha) * sin(beta),
-			//						pedicel_global.x + pedicel_length * sin(alpha) * sin(beta),
-			//						pedicel_global.z + pedicel_length * cos(beta)
-			//					};
-			//
-			//add nm::pedicel_global+base to: pedicel_base	;
-			//add nm::pedicel_global_end 	to: pedicel_end	    ;
-			//add nm::alpha_pedicel 		to: pedicel_alpha	;
-			//add nm::beta_pedicel 		to: pedicel_beta	;
+			direction_local <- {
+								cos(alpha_pedicel) * sin(beta_pedicel) ,
+								sin(alpha_pedicel) * sin(beta_pedicel) ,
+								cos(beta_pedicel)
+								};
 			
-				
-			pedicel_local <- { 
-								base.x,
-								base.y,
-								base.z + z_pedicel
-							};
+			// Convert local direction to global coordinates
+			direction_global<-  peduncle_right * direction_local.x 	+
+								peduncle_up * direction_local.y		+
+								peduncle_dir * direction_local.z;
 			
-			direction	<- apply_rotation({1,0,0}  , {0,0,1}, alpha_pedicel);
-			direction	<- apply_rotation(direction, {0,1,0}, beta_pedicel);
+
+			// Flower position
+			pos_flower		<- pos_pedicel_base + direction_global * pedicel_length;
+			 
 			
-			pedicel_global_end <- {
-									pedicel_local.x * direction.x * 3,
-									pedicel_local.y * direction.y * 3,
-									pedicel_local.z * direction.z * 3
-									};
-									
-			add nm::pedicel_local 		to: pedicel_base;
-			add nm::pedicel_global_end 	to: pedicel_end	;
-			
+			add nm::pos_pedicel_base 	to: pedicel_base	;
+			add nm::pos_flower 			to: pedicel_end	    ;
+			add nm::alpha_pedicel 		to: pedicel_alpha	;
+			add nm::beta_pedicel 		to: pedicel_beta	;
 		} 
-	}
-	
-	
-	// Rodrigus Rotation
-	point apply_rotation(point vector, point axis, float theta)
-	{
-		point k <- vector_normalize(axis);	
-		
-		point term_1 <- {
-						 vector.x * cos(theta) ,
-						 vector.y * cos(theta) ,
-						 vector.z * cos(theta)		
-						};
-						
-		point cross <- cross_product(k,vector);
-		
-		point term_2 <- {
-						 cross.x * sin(theta) , 
-						 cross.y * sin(theta) , 
-						 cross.z * sin(theta) 
-						};
-		float scalar <- dot_product(k,vector) * (1-cos(theta));
-		
-		point term_3 <- {
-						 k.x * scalar,
-						 k.y * scalar,
-						 k.z * scalar
-						};
-		
-		return {
-				term_1.x + term_2.x + term_3.x , 
-				term_1.y + term_2.y + term_3.y ,
-				term_1.z + term_2.z + term_3.z 
-				};			
 	}
 	
 	
