@@ -17,7 +17,8 @@ global
 	float 	height 		<- shape.height;
 	point 	main_pos 	<- {width / 2, height / 2};
 	
-	image_file f_leaf <- image_file("../../includes/img/leaf.png");
+	image_file f_leaf 	<- image_file("../../includes/img/leaf.png");
+	image_file f_flower <- image_file("../../includes/img/flower_tomato.png");
 	
 	init
 	{
@@ -25,10 +26,10 @@ global
 		
 		create tomato_truss number:1
 		{
-			base 	<- {0,0,0};
-			length 	<- 10.0;
-			alpha	<- 137.5 + gauss(0,10);
-			beta 	<- 35.0 + gauss(0,5); 		// TODO: change beta to simulate weight inclination
+			base 	<- main_pos;//{0,0,0};
+			length 	<- 0.0;
+			alpha	<- 70 + gauss(0, 45);  //137.5 + gauss(0,10);
+			beta 	<- 15 + gauss(0, 5);   //35.0 + gauss(0,5); 		// TODO: change beta to simulate weight inclination
 												// Hanging trusses require beta 60 to 90°
 												// Upright trusses require an angle of 10 to 20°
 			width	<- 1.0;
@@ -37,7 +38,8 @@ global
 			end 	<- base + {	length * cos(beta) * cos(alpha), 
 								length * cos(beta) * sin(alpha), 
 								length * sin(beta) 
-							};
+							  };
+							
 			
 			do draw_pedicel;
 		}
@@ -62,23 +64,49 @@ global
 
 species tomato_truss parent:plant_part
 {
-	float 	radius 				<- 0.5;
+	float 	radius_pedicel 		<- 0.5;
 	int 	fruit_number 		<- rnd(5,8);
 	float	phyllotaxy_angle	<- 137.5;
-	float	inclination_angle	<- 25.0; //20-40
-	float 	pedicel_length		<- 5.0;
+	float   init_pedicel_length	<- 0.1;
+	float 	max_penduncle_length<- 260.0;
+	float 	max_pedicel_length 	<- 70.0;
+	
+		
+	// Compute ortogonal axis to penducle
+	point	world_up		<- {0,0,1};
+	point 	peduncle_vector <- end - base update:end - base ;
+		
+	point 	peduncle_dir 	<- {0.0,0.0,0.0};
+		
+			
+	// Right axis of peduncle
+	point 	peduncle_right 	<- 	{0.0,0.0,0.0};
+			
+	// Upward axis of peduncle
+	point 	peduncle_up 	<- {0.0,0.0,0.0};
+		
+		
+
+
+	
 	
 	map<string,point> pedicel_base	<-[];
 	map<string,point> pedicel_end	<-[];
 	map<string,float> pedicel_alpha	<-[];
 	map<string,float> pedicel_beta	<-[];
 	
+	map<string,float> pedicel_energy<-[];
+	map<string,float> pedicel_flower<-[];
+	map<string,float> pedicel_length<-[];
+	
+	
 	action draw_pedicel
 	{
-		string 	nm 				<- "";
-		float 	t				<- 0.0;
-		float	beta_pedicel	<- 0.0;
-		float	alpha_pedicel	<- 0.0;
+		string 	nm 					<- "";
+		float 	t					<- 0.0;
+		float	beta_pedicel		<- 0.0;
+		float	alpha_pedicel		<- 0.0;
+		
 		
 		point	pos_pedicel_base;
 		point	direction_local;
@@ -86,16 +114,9 @@ species tomato_truss parent:plant_part
 		point	pos_flower;
 		
 		
-		// Compute ortogonal axis to penducle
-		point 	peduncle_vector <- end - base;
-		point 	peduncle_dir 	<- vector_normalize(peduncle_vector);
-		point	world_up		<- {0,0,1};
-		
-		// Right axis of peduncle
-		point peduncle_right 	<- vector_normalize(cross_product(peduncle_dir, world_up));
-		
-		// Upward axis of peduncle
-		point peduncle_up 		<- vector_normalize(cross_product(peduncle_right, peduncle_dir));
+		peduncle_dir 	<- vector_normalize(peduncle_vector);
+		peduncle_right 	<- vector_normalize(cross_product(peduncle_dir, world_up));
+		peduncle_up 	<- vector_normalize(cross_product(peduncle_right, peduncle_dir));
 		
 		
 		loop id from: 0 to: fruit_number - 1
@@ -104,32 +125,36 @@ species tomato_truss parent:plant_part
 			
 			// Position along peduncle
 			t					<- id / fruit_number; 
-			pos_pedicel_base 	<- base + peduncle_dir * (t*length);
+			pos_pedicel_base 	<- base + peduncle_dir * (t*length*scale);
+			
 			
 			// Radial direction of pedicel (local system of penducle)
-			alpha_pedicel  	<- id *  phyllotaxy_angle;
-			beta_pedicel	<- 20.0 ;//inclination_angle;
+			alpha_pedicel  		<- id *  phyllotaxy_angle;
+			beta_pedicel		<- 20.0 ; //inclination_angle; TODO: This one has to change to animate fruit growing
 			
-			direction_local <- {
-								cos(alpha_pedicel) * sin(beta_pedicel) ,
-								sin(alpha_pedicel) * sin(beta_pedicel) ,
-								cos(beta_pedicel)
+			direction_local 	<- {
+									 cos(alpha_pedicel) * sin(beta_pedicel) ,
+									 sin(alpha_pedicel) * sin(beta_pedicel) ,
+									 cos(beta_pedicel)
 								};
 			
 			// Convert local direction to global coordinates
-			direction_global<-  peduncle_right * direction_local.x 	+
-								peduncle_up * direction_local.y		+
-								peduncle_dir * direction_local.z;
+			direction_global	<-  peduncle_right 	* direction_local.x +
+									peduncle_up 	* direction_local.y	+
+									peduncle_dir 	* direction_local.z;
 			
 
 			// Flower position
-			pos_flower		<- pos_pedicel_base + direction_global * pedicel_length;
-			 
+			pos_flower			<- pos_pedicel_base + direction_global * init_pedicel_length;
+			
 			
 			add nm::pos_pedicel_base 	to: pedicel_base	;
 			add nm::pos_flower 			to: pedicel_end	    ;
 			add nm::alpha_pedicel 		to: pedicel_alpha	;
 			add nm::beta_pedicel 		to: pedicel_beta	;
+			
+			add nm::0.0					to: pedicel_flower  ;
+			add nm::init_pedicel_length	to: pedicel_length  ;
 		} 
 	}
 	
@@ -159,30 +184,106 @@ species tomato_truss parent:plant_part
 	point vector_normalize(point a)
 	{
 		float magnitude <- vector_magnitude(a);
-		return {a.x/magnitude, a.y/magnitude, a.z/magnitude};
+		if magnitude = 0
+		{
+			return a;
+		}
+		else
+		{
+			return {a.x/magnitude, a.y/magnitude, a.z/magnitude};
+		}
+		
 	}
+	
+	float smoothstep (float min_value, float max_value, float value)
+	{
+		float t <- (value - min_value) / (max_value - min_value);
+		t 		<- t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t);
+   		return t * t * (3.0 - 2.0 * t);
+	}
+	
+	
+	reflex growth when:every(24#h)
+	{
+		energy <- energy + 0.3;
+		
+		int 	id 			<- 0;
+		float 	position 	<- 0.0; 
+		
+		
+		point	direction_local;
+		point	direction_global;
+		point	pos_flower;
+		
+		peduncle_dir 	<- vector_normalize(peduncle_vector);
+		peduncle_right 	<- vector_normalize(cross_product(peduncle_dir, world_up));
+		peduncle_up 	<- vector_normalize(cross_product(peduncle_right, peduncle_dir));
+		
+		
+		length			<- max_penduncle_length *  smoothstep(0.0, 30.0, energy - position);
+		
+		end 			<- base + {	scale * length * cos(beta) * cos(alpha), 
+									scale * length * cos(beta) * sin(alpha), 
+									scale * length * sin(beta) 
+							  };
+		
+		
+		loop key over: pedicel_base.keys
+		{
+			position <- id / fruit_number;
+			// Update progress
+			pedicel_length[key] <- smoothstep(0.0, 30.0, energy - position);
+			pedicel_flower[key] <- smoothstep(0.0, 1.0, energy - position);
+			
+			
+			// Compute pedicel positions
+			pedicel_base[key] 	<- base + peduncle_dir * (position * scale * length);
+			
+			
+			// Radial direction of pedicel (local system of penducle)
+			
+			direction_local 	<- {
+									 cos(pedicel_alpha[key]) * sin(pedicel_beta[key]) ,
+									 sin(pedicel_alpha[key]) * sin(pedicel_beta[key]) ,
+									 cos(pedicel_beta[key])
+								};
+			
+			// Convert local direction to global coordinates
+			direction_global	<-  peduncle_right 	* direction_local.x +
+									peduncle_up 	* direction_local.y	+
+									peduncle_dir 	* direction_local.z;
+			
+
+			// Flower position
+			pedicel_end[key]	<- pedicel_base[key] + direction_global * scale * pedicel_length[key] * max_pedicel_length;
+			
+			
+			id <- id + 1;
+			
+		} 
+		
+	}
+	
 	
 	aspect default
 	{   
 		draw line([base, end], width) color: #green;
+		
+		
 		pair<float,point> rot_peduncle <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
-		pair<float,point> rot_pedicel;// <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
+		pair<float,point> rot_pedicel;
 		
 		loop key over: pedicel_base.keys
 		{
-			//rot_pedicel <- rotation_composition(rot_peduncle, pedicel_alpha[key]::{0,0,1}, pedicel_beta::{1,0,0});
-			draw line([pedicel_base[key], pedicel_end[key]], radius) color: #green; 
+			rot_pedicel <- rotation_composition(rot_peduncle, pedicel_alpha[key]::{0,0,1}, pedicel_beta::{1,0,0});
+			
+			draw line([pedicel_base[key], pedicel_end[key]], radius_pedicel) color: #green; 
+			
+			draw f_flower size: 3.5 * pedicel_flower[key]  rotate:rot_pedicel  at: pedicel_end[key];
 		} 
 		
-		
-		//draw line([{0,0,0}, {1.2,0,0}], 0.1) color: #green;                                                       
-		//draw sphere(0.2) at:{ 1.2 ,  0.0 , 0.0 } color:#yellow ;
-		//draw sphere(0.2) at:{-0.6 ,  1.04, 0.4 } color:#yellow ;
-		//draw sphere(0.2) at:{-1.1 , -0.3 , 0.8 } color:#yellow ;
-		//draw sphere(0.2) at:{ 0.3 , -1.15, 1.2 } color:#yellow ;
-		//draw sphere(0.2) at:{ 1.15,  0.5 , 1.6 } color:#yellow ;
-		//draw sphere(0.2) at:{-0.45,  1.1 , 2.0 } color:#yellow ;
-	}                 
+	}     
+	            
 }
 
 
@@ -273,7 +374,7 @@ species tomato_leaf parent:plant_part
 	// Spine
 		draw line([base, end], width) color: #green;
 		
-		pair<float,point> rot_spine <- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
+		pair<float,point> rot_spine 	<- rotation_composition(alpha::{0,0,1}, beta::{0,1,0});
 		pair<float,point> rot_leaflet_1 <- 45::{0,0,1};
 		
 	// Leaflets 
