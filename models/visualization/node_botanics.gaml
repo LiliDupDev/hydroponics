@@ -64,8 +64,12 @@ global
 species tomato_truss parent:plant_part
 {
 	int 	flowering_days		<- 0 update: int(cycle/24);
+
 	
-	float 	RCNF				<- 0.2; // fruit growth by day
+	float 	RCNF				<- 0.5; // fruit growth by day
+	float 	energy_per_fruit	<- 1.0;
+
+	
 	float 	energy_divisor		<- 5.0;
 	float	level_correction	<- 1.8 * (0.3 ^ level);
 
@@ -96,7 +100,6 @@ species tomato_truss parent:plant_part
 	// Compute ortogonal axis to penducle
 	point	world_up		<- {0,0,1};
 	point 	peduncle_vector <- end - base update:end - base ;
-		
 	point 	peduncle_dir 	<- {0.0,0.0,0.0};
 		
 			
@@ -119,6 +122,20 @@ species tomato_truss parent:plant_part
 	
 	
 
+	action update_delays 
+	{
+		float 	energy_per_pedicel <- 1.0;
+		int 	counter		<- 0;
+		loop key over: pedicel_base.keys
+		{
+			pedicel_energy_delay[key] 	<- counter * energy_per_pedicel;	
+			flower_energy_delay[key]	<- pedicel_energy_delay[key] + 0.6;
+			fruit_energy_delay[key]		<- pedicel_energy_delay[key] + 1.5;
+			
+			counter <- counter + 1;
+		}
+	}
+	
 	
 	action draw_pedicel
 	{
@@ -178,11 +195,22 @@ species tomato_truss parent:plant_part
 			add nm::init_pedicel_length	to: pedicel_length   	;
 			
 			add nm::0.0					to: pedicel_fruit 		;
-			add nm::id * 0.3 			to: pedicel_energy_delay;     
-			add nm::id * 0.6 + 0.3		to: flower_energy_delay ;  
-			add nm::id * 1.5 + 0.6		to: fruit_energy_delay	;
+			
+			
+			add nm::0	to: pedicel_energy_delay;    
+			//add nm::id * 0.3 * (1-RCNF)	to: pedicel_energy_delay;    
+			//add nm::id * 0.3 			to: pedicel_energy_delay;   
+			add nm::0	to: flower_energy_delay ;
+			//add nm::(id * 0.6 + 0.3) * (1-RCNF)		to: flower_energy_delay ;    
+			//add nm::id * 0.6 + 0.3		to: flower_energy_delay ;  
+			
+			add nm::0	to: fruit_energy_delay	;
+			//add nm::id * 1.5 + 0.6		to: fruit_energy_delay	;
 			
 		} 
+		
+		
+		do update_delays;
 		
 		pedicel_draw <- true;
 	}
@@ -235,7 +263,7 @@ species tomato_truss parent:plant_part
 	
 	reflex growth when:every(24#h)
 	{
-		energy <- energy + 0.3;
+		energy <- energy + RCNF;//0.3;
 		
 		int 	id 			<- 0;
 		float 	position 	<- 0.0; 
@@ -268,26 +296,37 @@ species tomato_truss parent:plant_part
 		// Pedicel growth
 		if pedicel_draw
 		{
-			float fruit_efective_delay	<- 0.0;
-			float energy_efficiency		<- 0.0;
+			do update_delays;
 			
+			float pedicel_effective_delay	<- 0.0;
+			float flower_effective_delay 	<- 0.0;
+			float fruit_efective_delay		<- 0.0;
+			float energy_efficiency			<- 0.0;
+			
+			
+			write "Day: " + int(cycle/24);
 			loop key over: pedicel_base.keys
 			{
 				position 				<- id / fruit_number;
-				fruit_efective_delay	<- fruit_energy_delay[key] * (1 - RCNF);
 				
+				pedicel_effective_delay	<- pedicel_energy_delay[key] ;// * (1 - RCNF);
+				flower_effective_delay	<- pedicel_energy_delay[key] ;// * (1 - RCNF);
+				fruit_efective_delay	<- fruit_energy_delay[key] 	 ;// * (1 - RCNF);
 				
 				
 				// Update progress
 				//pedicel_length[key] <- smoothstep(0.0, 30.0, (energy - position));
-				energy_efficiency 	<- max(0, energy - pedicel_energy_delay[key]);
+				energy_efficiency 	<- max(0, energy - pedicel_effective_delay);
         		pedicel_length[key] <- energy_efficiency < 0.0 ? 0.0 : pedicel_max_length * (1 - exp(-energy_efficiency/pedicel_energy_divisor));
 				//write key + ": " + pedicel_length[key];
+				write key + ": " + pedicel_length[key];
 				
 				
-				energy_efficiency 	<- max(0,energy - flower_energy_delay[key]);
+				energy_efficiency 	<- max(0,energy - flower_effective_delay);
 				pedicel_flower[key] <- flower_max_size * (1 - exp(-energy_efficiency/energy_divisor));//smoothstep(0.0, 3.5, (energy - position));
-
+				
+				
+				
 				
 				energy_efficiency 	<- max(0,energy - fruit_efective_delay);
 				pedicel_fruit[key] <- max_fruit_size * (1-exp(-energy_efficiency/energy_divisor));//smoothstep(0.0, 3.5, (energy - position));
