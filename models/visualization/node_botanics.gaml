@@ -66,12 +66,18 @@ species tomato_truss parent:plant_part
 	int 	flowering_days		<- 0 update: int(cycle/24);
 
 	
-	float 	RCNF				<- 0.5; // fruit growth by day
+	float 	RCNF				<- 0.2; 	// fruit growth by day
 	float 	energy_per_fruit	<- 1.0;
 
 	
-	float 	energy_divisor		<- 5.0;
-	float	level_correction	<- 1.8 * (0.3 ^ level);
+	float 	energy_divisor		<- 5.0;						// penduncle growth
+	float	level_correction	<- 1.8 * (0.3 ^ level);		// penduncle growth
+	
+	float 	flower_to_fruit_transition	<- 0.8;
+	float 	fruit_growth_rate			<- 0.1;
+	
+	rgb color_flower 	<- 	rgb(0,255,0); 		// Green
+	rgb color_fruit 	<-	rgb(255,0,0); 		// Red
 
 	
 	map<string,float> 	pedicel_energy_delay	<- [];
@@ -81,6 +87,7 @@ species tomato_truss parent:plant_part
 	map<string,float> 	flower_energy_delay		<- [];
 	float				flower_energy_divisor	<- 4.0;
 	float 				flower_max_size 		<- 3.5;
+	map<string,bool>	flower_developed		<- [];
 	
 	map<string,float> 	fruit_energy_delay 		<- [];
 	float				fruit_energy_divisor	<- 6.0;
@@ -93,6 +100,7 @@ species tomato_truss parent:plant_part
 	float 	radius_pedicel 		<- 0.5;
 	int 	fruit_number 		<- rnd(5,8);
 	float	phyllotaxy_angle	<- 137.5;
+	float	pedicel_init		<- 20.0;
 	float   init_pedicel_length	<- 0.0;
 	float 	max_penduncle_length<- 260.0;
 	
@@ -101,7 +109,6 @@ species tomato_truss parent:plant_part
 	point	world_up		<- {0,0,1};
 	point 	peduncle_vector <- end - base update:end - base ;
 	point 	peduncle_dir 	<- {0.0,0.0,0.0};
-		
 			
 	// Right axis of peduncle
 	point 	peduncle_right 	<- 	{0.0,0.0,0.0};
@@ -109,16 +116,15 @@ species tomato_truss parent:plant_part
 	// Upward axis of peduncle
 	point 	peduncle_up 	<- {0.0,0.0,0.0};
 		
-	map<string,point> pedicel_base		<-	[];
-	map<string,point> pedicel_end		<-	[];
-	map<string,float> pedicel_alpha		<-	[];
-	map<string,float> pedicel_beta		<-	[];
+	map<string,point> pedicel_base		<-	[];  	// pedicel position 
+	map<string,point> pedicel_end		<-	[];  	// pedicel position 
+	map<string,float> pedicel_length	<- 	[];		// pedicel size
+	map<string,float> pedicel_alpha		<-	[];  	// pedicel position rotation angle
+	map<string,float> pedicel_beta		<-	[];  	// pedicel position inclination angle
 	
-	map<string,float> pedicel_energy	<-	[];
-	map<string,float> pedicel_flower	<- 	[];
-	map<string,float> pedicel_length	<- 	[];
-	
-	map<string,float> pedicel_fruit		<- 	[];
+	map<string,float> pedicel_flower	<- 	[];		// flower size
+	map<string,float> pedicel_fruit		<- 	[];		// fruit size
+	map<string,float> fruit_growth		<- 	[];		// fruit size
 	
 	
 
@@ -167,7 +173,7 @@ species tomato_truss parent:plant_part
 			
 			// Radial direction of pedicel (local system of penducle)
 			alpha_pedicel  		<- id *  phyllotaxy_angle;
-			beta_pedicel		<- 20.0 ; //inclination_angle; TODO: This one has to change to animate fruit growing
+			beta_pedicel		<- pedicel_init ; //inclination_angle; TODO: This one has to change to animate fruit growing
 			
 			direction_local 	<- {
 									 cos(alpha_pedicel) * sin(beta_pedicel) ,
@@ -193,20 +199,13 @@ species tomato_truss parent:plant_part
 				
 			add nm::0.0					to: pedicel_flower   	;
 			add nm::init_pedicel_length	to: pedicel_length   	;
-			
 			add nm::0.0					to: pedicel_fruit 		;
 			
-			
-			add nm::0	to: pedicel_energy_delay;    
-			//add nm::id * 0.3 * (1-RCNF)	to: pedicel_energy_delay;    
-			//add nm::id * 0.3 			to: pedicel_energy_delay;   
-			add nm::0	to: flower_energy_delay ;
-			//add nm::(id * 0.6 + 0.3) * (1-RCNF)		to: flower_energy_delay ;    
-			//add nm::id * 0.6 + 0.3		to: flower_energy_delay ;  
-			
-			add nm::0	to: fruit_energy_delay	;
-			//add nm::id * 1.5 + 0.6		to: fruit_energy_delay	;
-			
+			add nm::0.0					to: pedicel_energy_delay;    
+			add nm::0.0					to: flower_energy_delay ;
+			add nm::0.0					to: fruit_energy_delay	;
+			add nm::false				to: flower_developed	;
+			add nm::0.0					to: fruit_growth		;
 		} 
 		
 		
@@ -216,6 +215,16 @@ species tomato_truss parent:plant_part
 	}
 	
 	
+	rgb interpolate_color (rgb start, rgb limit, float t)
+	{
+		t 	<- t < 0.0 ? 0.0 : (t > 1.0 ? 1.0 : t);
+		return rgb(
+				start.red 	+ (limit.red   - start.red  ) * t ,
+				start.green + (limit.green - start.green) * t ,
+				start.blue 	+ (limit.blue  - start.blue ) * t
+		);
+	}
+		
 	
 	point cross_product(point k, point v)
 	{
@@ -298,9 +307,6 @@ species tomato_truss parent:plant_part
 		{
 			do update_delays;
 			
-			float pedicel_effective_delay	<- 0.0;
-			float flower_effective_delay 	<- 0.0;
-			float fruit_efective_delay		<- 0.0;
 			float energy_efficiency			<- 0.0;
 			
 			
@@ -309,36 +315,16 @@ species tomato_truss parent:plant_part
 			{
 				position 				<- id / fruit_number;
 				
-				pedicel_effective_delay	<- pedicel_energy_delay[key] ;// * (1 - RCNF);
-				flower_effective_delay	<- pedicel_energy_delay[key] ;// * (1 - RCNF);
-				fruit_efective_delay	<- fruit_energy_delay[key] 	 ;// * (1 - RCNF);
-				
-				
 				// Update progress
-				//pedicel_length[key] <- smoothstep(0.0, 30.0, (energy - position));
-				energy_efficiency 	<- max(0, energy - pedicel_effective_delay);
+				energy_efficiency 	<- max(0, energy - pedicel_energy_delay[key]);
         		pedicel_length[key] <- energy_efficiency < 0.0 ? 0.0 : pedicel_max_length * (1 - exp(-energy_efficiency/pedicel_energy_divisor));
-				//write key + ": " + pedicel_length[key];
-				write key + ": " + pedicel_length[key];
 				
-				
-				energy_efficiency 	<- max(0,energy - flower_effective_delay);
-				pedicel_flower[key] <- flower_max_size * (1 - exp(-energy_efficiency/energy_divisor));//smoothstep(0.0, 3.5, (energy - position));
-				
-				
-				
-				
-				energy_efficiency 	<- max(0,energy - fruit_efective_delay);
-				pedicel_fruit[key] <- max_fruit_size * (1-exp(-energy_efficiency/energy_divisor));//smoothstep(0.0, 3.5, (energy - position));
-				
-					
 					 
 				// Compute pedicel positions
 				pedicel_base[key] 	<- base + peduncle_dir * (position * scale * length);
 					
 					
 				// Radial direction of pedicel (local system of penducle)
-					
 				direction_local 	<- {
 										 cos(pedicel_alpha[key]) * sin(pedicel_beta[key]) ,
 										 sin(pedicel_alpha[key]) * sin(pedicel_beta[key]) ,
@@ -352,7 +338,34 @@ species tomato_truss parent:plant_part
 					
 		
 				// Flower position
-				pedicel_end[key]	<- pedicel_base[key] + direction_global * (scale * pedicel_length[key]);//; * max_pedicel_length);
+				pedicel_end[key]	<- pedicel_base[key] + direction_global * (scale * pedicel_length[key]);
+				
+				
+				
+				
+				if flower_developed[key] = false
+				{
+					// Growth
+					energy_efficiency 	<- max(0,energy - flower_energy_delay[key]);
+					pedicel_flower[key] <- flower_max_size * (1 - exp(-energy_efficiency/energy_divisor));
+					
+					if pedicel_flower[key] >= flower_max_size * flower_to_fruit_transition
+					{
+						flower_developed[key] <- true;
+					}
+				}
+				else
+				{
+					pedicel_flower[key] 	<- flower_max_size * (1 - fruit_growth[key]);
+				}
+				
+				
+				if flower_developed[key] 
+				{
+					energy_efficiency 	<- max(0,energy - fruit_energy_delay[key]);
+					fruit_growth[key] 	<- min(1.0, pedicel_fruit[key] + fruit_growth_rate);
+					pedicel_fruit[key] 	<- max_fruit_size * smoothstep (0.0, 1.0, fruit_growth[key]);//* (1-exp(-energy_efficiency/energy_divisor));
+				}
 				
 				
 				id <- id + 1;
@@ -381,7 +394,7 @@ species tomato_truss parent:plant_part
 			
 			draw f_flower size: pedicel_flower[key]  rotate:rot_pedicel  at: pedicel_end[key];
 			
-			draw sphere(pedicel_fruit[key]) rotate:rot_pedicel at: pedicel_end[key] color: #red;
+			draw sphere(pedicel_fruit[key]) rotate:rot_pedicel at: pedicel_end[key] color: interpolate_color(color_flower, color_fruit, fruit_growth[key]) ;//#red;
 		} 
 		
 	}     
