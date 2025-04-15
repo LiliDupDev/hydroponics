@@ -1,0 +1,8 @@
+stage,structure
+1,FF[+X]F[-X]E
+2,FF[+X]F[-X]F[+X]F[-X]E
+3,FF[+X]F[-X]F[+X]F[-X]F[+X]F[-X]E
+4,FF[+X]F[-X]F[+X]F[-X]F[+X]F[-X]F[+X]F[-X]E
+5,FF[+f[+X]f[-X]Fe]F[-f[+X]f[-X]Fe]F[+f[+X]f[-X]Fe]F[-f[+X]f[-X]Fe]F[+f[+X]f[-X]Fe]F[-f[+X]f[-X]Fe]F[+f[+X]f[-X]Fe]F[-f[+X]f[-X]Fe]F[+f[+X]f[-X]Fe]F[-f[+X]f[-X]Fe]E
+6,FF[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe]F[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]Fe][+x]f[-x]fx
+7,FGFG[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[+f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe]FG[-f[+f[+x]f[-x]fx]f[-f[+x]f[-x]fx]FGe][+x]f[-x]fx
